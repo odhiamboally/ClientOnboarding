@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path="Directory.Build.props" />
+    <File Path="nuget.config" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="Application/CO.Application/CO.Application.csproj" />
+    <Project Path="Domain/CO.Domain/CO.Domain.csproj" Id="47bc06aa-232e-458b-be90-9d640e9b66cb" />
+    <Project Path="Infrastructure/CO.Infrastructure/CO.Infrastructure.csproj" />
+    <Project Path="Persistence/CO.Persistence/CO.Persistence.csproj" Id="508685b6-6aed-461d-9e12-491a41dc6665" />
+    <Project Path="Shared/CO.Shared.Validation/CO.Shared.Validation.csproj" />
+    <Project Path="Shared/CO.Shared/CO.Shared.csproj" Id="12eb0653-034a-4a1c-a2e7-b4cf9497c608" />
+    <Project Path="UI/CO.UI.Blazor/CO.UI.Blazor.csproj" Id="456caa05-d7c2-48c1-b106-2aaa934e8bfa" />
+  </Folder>
+</Solution>

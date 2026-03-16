@@ -1,0 +1,68 @@
+﻿
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<Router AppAssembly="typeof(Program).Assembly">
+    <Found Context="routeData">
+        <GlobalErrorBoundary @ref="_errorBoundary">
+            <ChildContent>
+                <RouteView RouteData="routeData"
+                           DefaultLayout="typeof(Layout.MainLayout)" />
+                <FocusOnNavigate RouteData="routeData" Selector="h1" />
+            </ChildContent>
+            <ErrorContent Context="ex">
+                <MudPaper Class="pa-6 ma-4" Elevation="2">
+                    <MudStack Spacing="3">
+                        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+                            <MudIcon Icon="@Icons.Material.Filled.Error"
+                                     Color="Color.Error"
+                                     Style="font-size:2rem;" />
+                            <MudText Typo="Typo.h6" Color="Color.Error">
+                                Something went wrong
+                            </MudText>
+                        </MudStack>
+                        <MudText Typo="Typo.body2" Color="Color.Secondary">
+                            We encountered an unexpected error.
+                            Please try again or contact support if the problem persists.
+                        </MudText>
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => Navigation.NavigateTo("/", forceLoad: true))">
+                            Reload Application
+                        </MudButton>
+                    </MudStack>
+                </MudPaper>
+            </ErrorContent>
+        </GlobalErrorBoundary>
+    </Found>
+    <NotFound>
+        <PageTitle>Not Found</PageTitle>
+        <LayoutView Layout="typeof(Layout.MainLayout)">
+            <MudStack AlignItems="AlignItems.Center" Class="pa-8">
+                <MudText Typo="Typo.h4">404</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary">
+                    Page not found
+                </MudText>
+                <MudButton Href="/" Variant="Variant.Outlined" Color="Color.Primary">
+                    Go Home
+                </MudButton>
+            </MudStack>
+        </LayoutView>
+    </NotFound>
+</Router>
+
+@code {
+    [Inject] NavigationManager Navigation { get; set; } = default!;
+
+    private GlobalErrorBoundary? _errorBoundary;
+
+    // This allows you to reset the error state when navigating
+    protected override void OnParametersSet()
+    {
+        _errorBoundary?.Recover();
+    }
+}

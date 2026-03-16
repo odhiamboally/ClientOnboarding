@@ -1,0 +1,120 @@
+﻿
+
+@inherits ClientFormModalBase
+
+
+<MudDialog Style="max-height:90vh;">
+    <TitleContent>
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.Business" Color="Color.Primary" />
+            <MudText Typo="Typo.h6">
+                @(ExistingClient is null ? "New Client" : $"Edit — {ExistingClient.CompanyName}")
+            </MudText>
+        </MudStack>
+    </TitleContent>
+
+    <DialogContent>
+        @if (_loadingClient)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-6">
+                <MudProgressCircular Color="Color.Primary" Indeterminate />
+            </MudStack>
+        }
+        else
+        {
+            <MudForm Model="_model" @ref="_form"
+                     Validation="_validator.ValidateValue"
+                     ValidationDelay="0">
+
+                @* Classification bar — always visible *@
+                <MudPaper Elevation="0" Class="pa-3 mb-3"
+                          Style="background:var(--mud-palette-background-grey); border-radius:6px;">
+                    <MudGrid Spacing="2">
+                        <MudItem xs="12" sm="4">
+                            <MudSelect T="string" @bind-Value="_model.ClientType"
+                                       Label="Client Type" Variant="Variant.Outlined"
+                                       Margin="Margin.Dense" Required
+                                       For="@(() => _model.ClientType)">
+                                @foreach (var item in _lookups.ClientTypes)
+                                {
+                                    <MudSelectItem Value="@item.Name">@item.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudSelect T="string" @bind-Value="_model.SegmentType"
+                                       Label="Segment Type" Variant="Variant.Outlined"
+                                       Margin="Margin.Dense" Required
+                                       For="@(() => _model.SegmentType)">
+                                @foreach (var item in _lookups.SegmentTypes)
+                                {
+                                    <MudSelectItem Value="@item.Name">@item.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                        <MudItem xs="12" sm="4">
+                            <MudSelect T="string" @bind-Value="_model.SubSegmentType"
+                                       Label="Sub-Segment Type" Variant="Variant.Outlined"
+                                       Margin="Margin.Dense" Required
+                                       For="@(() => _model.SubSegmentType)">
+                                @foreach (var item in _lookups.SubSegmentTypes)
+                                {
+                                    <MudSelectItem Value="@item.Name">@item.Name</MudSelectItem>
+                                }
+                            </MudSelect>
+                        </MudItem>
+                    </MudGrid>
+                </MudPaper>
+
+                @* Tabs *@
+                <MudTabs Elevation="0" Rounded ApplyEffectsToContainer
+                         PanelClass="pt-3" @bind-ActivePanelIndex="_activeTab">
+
+                    <MudTabPanel Text="Corporate Details"
+                                 Icon="@Icons.Material.Filled.Business">
+                        <CorporateDetailsTab Model="_model"
+                                             StaffMembers="_staffMembers"
+                                             LinesOfBusiness="_lookups.LinesOfBusiness"
+                                             IdentificationTypes="_lookups.IdentificationTypes" />
+                    </MudTabPanel>
+
+                    <MudTabPanel Text="Address"
+                                 Icon="@Icons.Material.Filled.LocationOn">
+                        <AddressTab Model="_model" />
+                    </MudTabPanel>
+
+                    <MudTabPanel Text="Communication"
+                                 Icon="@Icons.Material.Filled.Notifications">
+                        <CommunicationPrefsTab Model="_model" />
+                    </MudTabPanel>
+
+                    <MudTabPanel Text="Directors"
+                                 Icon="@Icons.Material.Filled.People">
+                        <DirectorsTab Directors="@(ExistingClient?.Directors ?? [])"
+                                      IsReadOnly="@(ExistingClient is null)"
+                                      ClientId="@(ExistingClient?.Id)" />
+                    </MudTabPanel>
+
+                </MudTabs>
+
+            </MudForm>
+            
+        }
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel" Variant="Variant.Text" Size="Size.Small">
+            Cancel
+        </MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled"
+                   Size="Size.Small"
+                   Disabled="_saving || _loadingClient"
+                   OnClick="HandleSubmit">
+            @if (_saving)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-1" />
+            }
+            @(ExistingClient is null ? "Create Client" : "Save Changes")
+        </MudButton>
+    </DialogActions>
+</MudDialog>

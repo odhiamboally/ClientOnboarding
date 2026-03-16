@@ -1,0 +1,280 @@
+﻿@page "/clients"
+@inherits ClientListBase
+
+<PageTitle>Clients — Corporate Onboarding</PageTitle>
+
+<MudStack Spacing="2">
+
+    @* Header *@
+    <MudStack Row AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-1">
+        <div>
+            <MudText Typo="Typo.h5" Class="fw-bold">Corporate Clients</MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                @if (_totalRecords > 0)
+                {
+                    <span>Loaded <strong>@_clients.Count</strong> of <strong>@_totalRecords</strong> records</span>
+                }
+            </MudText>
+        </div>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Size="Size.Small"
+                   StartIcon="@Icons.Material.Filled.Add"
+                   OnClick="@(() => OpenFormModal(null, 0))">
+            New Client
+        </MudButton>
+    </MudStack>
+
+    @* Search + Filters *@
+    <MudPaper Elevation="0" Class="pa-2"
+              Style="border:1px solid var(--mud-palette-divider); border-radius:6px;">
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+            <MudTextField @bind-Value="_searchModel.GlobalSearch"
+                          Placeholder="Search name, number, TIN, mobile, email..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          DebounceInterval="400"
+                          OnDebounceIntervalElapsed="ResetAndLoad"
+                          Class="flex-grow-1" />
+            <MudIconButton Icon="@Icons.Material.Filled.FilterList"
+                           Title="Advanced Filters"
+                           Color="@(_showFilters ? Color.Primary : Color.Default)"
+                           OnClick="ToggleFilters" />
+            @if (HasActiveFilters)
+            {
+                <MudIconButton Icon="@Icons.Material.Filled.FilterAltOff"
+                               Title="Clear Filters"
+                               Color="Color.Error"
+                               OnClick="ClearFilters" />
+            }
+        </MudStack>
+
+        @if (_showFilters)
+        {
+            <MudDivider Class="my-2" />
+            <MudGrid Spacing="2">
+                <MudItem xs="6" sm="3">
+                    <MudSelect T="string" @bind-Value="_searchModel.ClientType"
+                               Label="Client Type" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" Clearable>
+                        @foreach (var item in _lookups.ClientTypes)
+                        {
+                            <MudSelectItem Value="@item.Name">@item.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudSelect T="string" @bind-Value="_searchModel.SegmentType"
+                               Label="Segment" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" Clearable>
+                        @foreach (var item in _lookups.SegmentTypes)
+                        {
+                            <MudSelectItem Value="@item.Name">@item.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudSelect T="string" @bind-Value="_searchModel.Status"
+                               Label="Status" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" Clearable>
+                        @foreach (var item in _lookups.Statuses)
+                        {
+                            <MudSelectItem Value="@item.Name">@item.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+                <MudItem xs="6" sm="3">
+                    <MudSelect T="Guid?" @bind-Value="_searchModel.RelationshipManagerId"
+                               Label="Relationship Manager" Variant="Variant.Outlined"
+                               Margin="Margin.Dense" Clearable>
+                        @foreach (var rm in _staffMembers)
+                        {
+                            <MudSelectItem T="Guid?" Value="@((Guid?)rm.Id)">
+                                @rm.FullName (@rm.StaffCode)
+                            </MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+            <MudStack Row Justify="Justify.FlexEnd" Class="mt-2">
+                <MudButton Size="Size.Small" Variant="Variant.Filled"
+                           Color="Color.Primary" OnClick="ResetAndLoad">
+                    Apply
+                </MudButton>
+            </MudStack>
+        }
+    </MudPaper>
+
+    @* Table *@
+    <MudPaper Elevation="0"
+              Style="border:1px solid var(--mud-palette-divider); border-radius:6px; overflow:hidden;">
+
+        @if (_loading && _clients.Count == 0)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-6">
+                <MudProgressCircular Color="Color.Primary" Indeterminate Size="Size.Small" />
+                <MudText Typo="Typo.caption" Class="mt-1">Loading...</MudText>
+            </MudStack>
+        }
+        else if (_clients.Count == 0)
+        {
+            <MudStack AlignItems="AlignItems.Center" Class="pa-8">
+                <MudIcon Icon="@Icons.Material.Filled.SearchOff"
+                         Style="font-size:2.5rem; opacity:0.3;" />
+                <MudText Typo="Typo.body2" Class="mt-2">No clients found</MudText>
+            </MudStack>
+        }
+        else
+        {
+            <div style="overflow-x:auto;">
+                <MudTable Items="_clients"
+                          Dense="true"
+                          Hover="true"
+                          Elevation="0"
+                          FixedHeader="true"
+                          Height="calc(100vh - 300px)"
+                          T="ClientResponse"
+                          Style="min-width:900px;">
+                    <HeaderContent>
+                        <MudTh Style="width:110px; white-space:nowrap;">Client No.</MudTh>
+                        <MudTh Style="width:200px; white-space:nowrap;">Company Name</MudTh>
+                        <MudTh Style="width:80px; white-space:nowrap;">Type</MudTh>
+                        <MudTh Style="width:160px; white-space:nowrap;">Segment</MudTh>
+                        <MudTh Style="width:150px; white-space:nowrap;">RM</MudTh>
+                        <MudTh Style="width:120px; white-space:nowrap;">Mobile</MudTh>
+                        <MudTh Style="width:90px; white-space:nowrap;">Opened</MudTh>
+                        <MudTh Style="width:90px; white-space:nowrap;">Status</MudTh>
+                        <MudTh Style="width:100px; text-align:center; white-space:nowrap;">Actions</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd>
+                            <MudText Typo="Typo.body2"
+                                     Style="font-family:monospace; font-size:0.75rem; font-weight:600;">
+                                @context.ClientNumber
+                            </MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2" Style="font-size:0.8rem;">
+                                @context.CompanyName
+                            </MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.caption">@context.ClientType</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.caption" Style="white-space:nowrap;">@context.SegmentType</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.body2" Style="font-size:0.78rem;">
+                                @context.RelationshipManagerName
+                            </MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.caption">@context.Mobile</MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudText Typo="Typo.caption">
+                                @context.OpenedOn.ToString("dd/MM/yyyy")
+                            </MudText>
+                        </MudTd>
+                        <MudTd>
+                            <MudChip T="string" Size="Size.Small"
+                                     Color="@GetStatusColor(context.Status)"
+                                     Style="font-size:0.7rem; height:20px;">
+                                @context.Status
+                            </MudChip>
+                        </MudTd>
+                        <MudTd Style="text-align:center;">
+                            <MudStack Row Spacing="0" Justify="Justify.Center">
+                                @* {{!-- View dropdown --}} *@
+                                <MudMenu Icon="@Icons.Material.Filled.Visibility"
+                                         Size="Size.Small"
+                                         Title="View"
+                                         Dense="true">
+                                    <MudMenuItem OnClick="@(() => OpenViewModal(context, 0))">
+                                        Corporate Details
+                                    </MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenViewModal(context, 1))">
+                                        Address
+                                    </MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenViewModal(context, 2))">
+                                        Communication Prefs
+                                    </MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenViewModal(context, 3))">
+                                        Directors
+                                    </MudMenuItem>
+                                    <MudDivider />
+                                    <MudMenuItem OnClick="@(() => OpenViewModal(context, 0))">
+                                        <strong>View All</strong>
+                                    </MudMenuItem>
+                                </MudMenu>
+
+                                @* {{!-- Edit dropdown --}} *@
+                                <MudMenu Icon="@Icons.Material.Filled.Edit"
+                                         Size="Size.Small"
+                                         Title="Edit"
+                                         Dense="true"
+                                         Color="Color.Primary">
+                                    <MudMenuItem OnClick="@(() => OpenFormModal(context, 0))">
+                                        Corporate Details
+                                    </MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenFormModal(context, 1))">
+                                        Address
+                                    </MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenFormModal(context, 2))">
+                                        Communication Prefs
+                                    </MudMenuItem>
+                                    <MudMenuItem OnClick="@(() => OpenFormModal(context, 3))">
+                                        Directors
+                                    </MudMenuItem>
+                                    <MudDivider />
+                                    <MudMenuItem OnClick="@(() => OpenFormModal(context, 0))">
+                                        <strong>Edit All</strong>
+                                    </MudMenuItem>
+                                </MudMenu>
+
+                                @* {{!-- Delete --}} *@
+                                <MudIconButton Icon="@Icons.Material.Filled.DeleteOutline"
+                                               Size="Size.Small"
+                                               Color="Color.Error"
+                                               Title="Delete"
+                                               OnClick="@(() => OpenDeleteModal(context))" />
+                            </MudStack>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            </div>
+
+            @* Load More *@
+
+            @if (!_isLastPage)
+            {
+                <MudStack AlignItems="AlignItems.Center" Class="py-2"
+                          Style="border-top:1px solid var(--mud-palette-divider);">
+                    <MudButton Variant="Variant.Text"
+                               Color="Color.Primary"
+                               Size="Size.Small"
+                               Disabled="_loading"
+                               OnClick="LoadMore">
+                        @if (_loading)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-1" />
+                        }
+                        Load More
+                    </MudButton>
+                </MudStack>
+            }
+            else if (_clients.Count > 0)
+            {
+                <MudStack AlignItems="AlignItems.Center" Class="py-1">
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        All @_clients.Count records loaded
+                    </MudText>
+                </MudStack>
+            }
+        }
+    </MudPaper>
+
+</MudStack>

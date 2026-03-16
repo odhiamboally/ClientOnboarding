@@ -1,0 +1,82 @@
+﻿
+<MudDialog Style="max-height:90vh;">
+    <TitleContent>
+        <MudStack Row AlignItems="AlignItems.Center" Spacing="2">
+            <MudIcon Icon="@Icons.Material.Filled.BusinessCenter" Color="Color.Primary" />
+            <div>
+                <MudText Typo="Typo.h6">@Client.CompanyName</MudText>
+                <MudText Typo="Typo.caption" Color="Color.Secondary">
+                    @Client.ClientNumber · @Client.Status
+                </MudText>
+            </div>
+        </MudStack>
+    </TitleContent>
+
+    <DialogContent>
+        <MudTabs Elevation="0" Rounded ApplyEffectsToContainer
+                 PanelClass="pt-3" ActivePanelIndex="InitialTab">
+
+            <MudTabPanel Text="Corporate" Icon="@Icons.Material.Filled.Business">
+                <MudGrid Spacing="2">
+                    <MudItem xs="6" sm="4"><MudField Label="Company Name" Variant="Variant.Outlined">@Client.CompanyName</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="TIN Number" Variant="Variant.Outlined">@Client.TINNumber</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Registration No." Variant="Variant.Outlined">@Client.RegistrationNumber</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Line of Business" Variant="Variant.Outlined">@Client.LineOfBusiness</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Nature of Business" Variant="Variant.Outlined">@Client.NatureOfBusiness</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Identification Type" Variant="Variant.Outlined">@Client.IdentificationType</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Date of Registration" Variant="Variant.Outlined">@Client.DateOfRegistration.ToString("dd MMM yyyy")</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Opened On" Variant="Variant.Outlined">@Client.OpenedOn.ToString("dd MMM yyyy")</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Relationship Manager" Variant="Variant.Outlined">@Client.RelationshipManagerName</MudField></MudItem>
+                    <MudItem xs="6" sm="3"><MudField Label="Business Started" Variant="Variant.Outlined">@(Client.BusinessStartedYear?.ToString() ?? "—")</MudField></MudItem>
+                    <MudItem xs="6" sm="3"><MudField Label="Employees" Variant="Variant.Outlined">@(Client.NumberOfEmployees?.ToString() ?? "—")</MudField></MudItem>
+                    <MudItem xs="12" sm="6"><MudField Label="Website" Variant="Variant.Outlined">@(Client.Website ?? "—")</MudField></MudItem>
+                    @if (!string.IsNullOrWhiteSpace(Client.Comments))
+                    {
+                        <MudItem xs="12"><MudField Label="Comments" Variant="Variant.Outlined">@Client.Comments</MudField></MudItem>
+                    }
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Address" Icon="@Icons.Material.Filled.LocationOn">
+                <MudGrid Spacing="2">
+                    <MudItem xs="12"><MudField Label="Residential Address" Variant="Variant.Outlined">@Client.ResidentialAddress</MudField></MudItem>
+                    <MudItem xs="6" sm="3"><MudField Label="Country" Variant="Variant.Outlined">@Client.Country</MudField></MudItem>
+                    <MudItem xs="6" sm="3"><MudField Label="Region" Variant="Variant.Outlined">@Client.Region</MudField></MudItem>
+                    <MudItem xs="6" sm="3"><MudField Label="District" Variant="Variant.Outlined">@Client.District</MudField></MudItem>
+                    <MudItem xs="6" sm="3"><MudField Label="Ward" Variant="Variant.Outlined">@Client.Ward</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Mobile" Variant="Variant.Outlined">@(Client.Mobile ?? "—")</MudField></MudItem>
+                    <MudItem xs="6" sm="4"><MudField Label="Phone (Work)" Variant="Variant.Outlined">@(Client.PhoneWork ?? "—")</MudField></MudItem>
+                    <MudItem xs="12" sm="4"><MudField Label="Email" Variant="Variant.Outlined">@(Client.EmailId ?? "—")</MudField></MudItem>
+                </MudGrid>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Communication" Icon="@Icons.Material.Filled.Notifications">
+                <MudStack Spacing="1" Class="pa-2">
+                    <MudCheckBox Value="@Client.CanSendGreetings" Disabled Label="Can Send Greetings" />
+                    <MudCheckBox Value="@Client.CanSendAssociateSpecialOffer" Disabled Label="Can Send Associate Special Offer" />
+                    <MudCheckBox Value="@Client.CanSendOurSpecialOffers" Disabled Label="Can Send Our Special Offers" />
+                    <MudCheckBox Value="@Client.StatementOnline" Disabled Label="Statement Online" />
+                    <MudCheckBox Value="@Client.MobileAlert" Disabled Label="Mobile Alert" />
+                </MudStack>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Directors" Icon="@Icons.Material.Filled.People">
+                <DirectorsTab Directors="Client.Directors" IsReadOnly="true" />
+            </MudTabPanel>
+
+        </MudTabs>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())"
+                   Variant="Variant.Text" Size="Size.Small">
+            Close
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public ClientResponse Client { get; set; } = default!;
+    [Parameter] public int InitialTab { get; set; }
+}

@@ -1,0 +1,88 @@
+﻿using CO.Domain.Contracts.Interfaces.Repositories;
+using CO.Domain.Contracts.Specifications;
+using CO.Persistence.DataContext;
+using CO.Persistence.Extensions;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq.Expressions;
+using System.Text;
+
+namespace CO.Persistence.Contracts.Implementations.Repositories;
+
+public class Repository<T>(DBContext context) : IRepository<T> where T : class
+{
+    private readonly DBContext _context = context;
+
+    public async Task<T> CreateAsync(T entity, CancellationToken ct = default)
+    {
+        await _context.Set<T>().AddAsync(entity, ct);
+        return entity;
+    }
+
+    public virtual async Task<int> CountAsync(CancellationToken ct = default) => await _context.Set<T>().CountAsync(ct);
+
+    public async Task<T> DeleteAsync(Guid Id, CancellationToken ct = default)
+    {
+        var entity = await FindByIdAsync(Id, ct);
+
+        if (entity == null)
+            throw new Exception($"Entity with id {Id} not found");
+
+        _context.Set<T>().Remove(entity);
+        return entity;
+    }
+
+    public async Task<T> DeleteAsync(string Id, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(Id))
+            throw new ArgumentException("Id cannot be null or empty", nameof(Id));
+        var entity = await FindByIdAsync(Guid.Parse(Id), ct);
+        if (entity == null)
+            throw new Exception($"Entity with id {Id} not found");
+        _context.Set<T>().Remove(entity);
+        return entity;
+    }
+
+    public IQueryable<T> FindAll()
+    {
+        return _context.Set<T>().AsNoTracking();
+    }
+
+    public IQueryable<T> FindByCondition(Expression<Func<T, bool>> expression)
+    {
+        return _context.Set<T>().Where(expression).AsNoTracking();
+
+    }
+
+    public async Task<T?> FindByIdAsync(Guid Id, CancellationToken ct = default)
+    {
+        return await _context.Set<T>().FindAsync([Id], ct);
+
+    }
+
+    public async Task<List<T>> SearchAsync<TCursor>(ISpecification<T, TCursor> spec, CancellationToken ct = default)
+    {
+        return await _context.Set<T>().Specify(spec).ToListAsync(ct);
+    }
+
+    public async Task<T> UpdateAsync(T entity)
+    {
+        _context.Set<T>().Update(entity);
+        //await _context.SaveChangesAsync();
+        return entity;
+    }
+
+    public async Task<int> UpdateRangeAsync(List<T> entities, CancellationToken ct = default)
+    {
+        if (entities == null || entities.Count == 0)
+            return 0;
+
+        _context.Set<T>().UpdateRange(entities);
+        return await _context.SaveChangesAsync(ct);
+
+
+    }
+
+    
+}
