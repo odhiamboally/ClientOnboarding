@@ -30,5 +30,7 @@ public class PagedResponse<T, TCursor>
         TotalPages = (int)Math.Ceiling(items.Count / (double)pageSize);
         IsFirstPage = isFirstPage;
         NextCursor = nextCursor;
+        HasNextPage = nextCursor is not null && !nextCursor.Equals(default(TCursor));
+        
     }
 }

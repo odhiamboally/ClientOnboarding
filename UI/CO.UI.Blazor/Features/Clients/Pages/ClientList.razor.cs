@@ -117,7 +117,8 @@ public class ClientListBase : ComponentBase
 
     protected async Task ResetAndLoad()
     {
-        _searchModel.Cursor = _nextCursor;
+        //_searchModel.Cursor = _nextCursor;
+        _searchModel.Cursor = null;
         await LoadClientsAsync(reset: true);
     }
 
