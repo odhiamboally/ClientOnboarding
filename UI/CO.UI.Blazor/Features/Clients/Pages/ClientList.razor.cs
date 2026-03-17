@@ -1,4 +1,5 @@
 ﻿using CO.Application.Contracts.Interfaces.Services;
+using CO.Application.Features.Clients.Commands;
 using CO.Application.Features.Clients.Queries;
 using CO.Application.Features.StaffMembers.Queries;
 using CO.Shared.Dtos.Client;
@@ -259,12 +260,21 @@ public class ClientListBase : ComponentBase
             "Confirm Delete", parameters,
             new DialogOptions { MaxWidth = MaxWidth.ExtraSmall, FullWidth = true });
 
-        var result = await dialog.Result;
-        if (result is { Canceled: false })
+        var dialogResult = await dialog.Result;
+        if (dialogResult is { Canceled: false })
         {
-            Snackbar.Add($"{client.CompanyName} deleted.", Severity.Success);
-            ResetPaginationState();
-            await LoadClientsAsync();
+            var result = await Sender.Send(new DeleteClientCommand(client.Id));
+
+            if (result.Successful)
+            {
+                Snackbar.Add($"{client.CompanyName} deleted.", Severity.Success);
+                ResetPaginationState();
+                await LoadClientsAsync();
+            }
+            else
+            {
+                Snackbar.Add(result.Message ?? "Failed to delete client.", Severity.Error);
+            }
         }
     }
 

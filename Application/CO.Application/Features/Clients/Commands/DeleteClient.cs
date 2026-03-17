@@ -34,7 +34,7 @@ internal sealed class DeleteClientCommandHandler(IUnitOfWork _unitOfWork, ILogge
             if (client is null)
                 return AppResponse<bool>.Failure($"Client {command.ClientId} not found.");
 
-            await _unitOfWork.ClientRepository.SoftDeleteAsync(command.ClientId);
+            await _unitOfWork.ClientRepository.SoftDeleteAsync(command.ClientId, ct);
 
             var saved = await _unitOfWork.CompleteAsync(ct) > 0;
             if (!saved)
