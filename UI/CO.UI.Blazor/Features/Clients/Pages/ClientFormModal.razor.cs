@@ -61,6 +61,9 @@ public class ClientFormModalBase : ComponentBase
     {
         try
         {
+            await _form.ValidateAsync();
+            if (!_form.IsValid) return;
+
             if (ExistingClient is null)
             {
                 var result = await Sender.Send(

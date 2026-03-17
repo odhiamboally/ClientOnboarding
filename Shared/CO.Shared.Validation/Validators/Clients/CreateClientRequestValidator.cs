@@ -18,16 +18,19 @@ public class CreateClientRequestValidator : Validator<CreateClientRequest>
 
         // ── Classification ──────────────────────────────────────────────
         RuleFor(x => x.ClientType)
-            .IsInEnum().WithMessage("Please select a valid client type.")
-            .NotEmpty().WithMessage("Please select a valid client type.");
+            .NotEmpty().WithMessage("Client type is required.")
+            .Must(v => Enum.TryParse<ClientType>(v, out _))
+            .WithMessage("Please select a valid client type.");
 
         RuleFor(x => x.SegmentType)
-            .IsInEnum().WithMessage("Please select a valid segment type.")
-            .NotEmpty().WithMessage("Please select a valid segment type.");
+            .NotEmpty().WithMessage("Segment type is required.")
+            .Must(v => Enum.TryParse<SegmentType>(v, out _))
+            .WithMessage("Please select a valid segment type.");
 
         RuleFor(x => x.SubSegmentType)
-            .IsInEnum().WithMessage("Please select a valid sub-segment type.")
-            .NotEmpty().WithMessage("Please select a valid sub-segment type.");
+            .NotEmpty().WithMessage("Sub-segment type is required.")
+            .Must(v => Enum.TryParse<SubSegmentType>(v, out _))
+            .WithMessage("Please select a valid sub-segment type.");
 
         // ── Corporate Details ───────────────────────────────────────────
         RuleFor(x => x.CompanyName)
@@ -35,15 +38,18 @@ public class CreateClientRequestValidator : Validator<CreateClientRequest>
             .MaximumLength(300).WithMessage("Company name cannot exceed 300 characters.");
 
         RuleFor(x => x.LineOfBusiness)
-            .NotEmpty().WithMessage("Please select a valid line of business.");
+            .NotEmpty().WithMessage("Line of business is required.")
+            .Must(v => Enum.TryParse<LineOfBusiness>(v, out _))
+            .WithMessage("Please select a valid line of business.");
 
         RuleFor(x => x.NatureOfBusiness)
             .NotEmpty().WithMessage("Nature of business is required.")
             .MaximumLength(500).WithMessage("Nature of business cannot exceed 500 characters.");
 
         RuleFor(x => x.IdentificationType)
-            .IsInEnum().WithMessage("Please select a valid identification type.")
-            .NotEmpty().WithMessage("Please select a valid identification type.");
+           .NotEmpty().WithMessage("Identification type is required.")
+           .Must(v => Enum.TryParse<IdentificationType>(v, out _))
+           .WithMessage("Please select a valid identification type.");
 
         RuleFor(x => x.RegistrationNumber)
             .NotEmpty().WithMessage("Registration number is required.")

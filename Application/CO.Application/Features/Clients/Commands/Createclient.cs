@@ -110,10 +110,15 @@ internal sealed class CreateClientCommandHandler(
                 client.ToClientResponse());
                 
         }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Domain validation failed creating client");
+            return AppResponse<ClientResponse>.Failure(ex.Message);  
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating client");
-            throw;
+            throw;  
         }
     }
 }
