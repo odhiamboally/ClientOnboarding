@@ -1,0 +1,47 @@
+﻿<MudDialog>
+    <DialogContent>
+        <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-2">
+            <MudIcon Icon="@Icons.Material.Filled.Warning"
+                     Color="Color.Error" Style="font-size:2.5rem;" />
+            <MudText Typo="Typo.body1" Align="Align.Center">
+                Delete <strong>@ClientName</strong>?
+            </MudText>
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Align="Align.Center">
+                This action cannot be undone.
+            </MudText>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="@(() => MudDialog.Cancel())"
+                   Variant="Variant.Text" Size="Size.Small">
+            Cancel
+        </MudButton>
+        <MudButton Color="Color.Error" Variant="Variant.Filled"
+                   Size="Size.Small" Disabled="_deleting"
+                   OnClick="Confirm">
+            @if (_deleting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate Class="mr-1" />
+            }
+            Delete
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Inject] ISnackbar Snackbar { get; set; } = default!;
+
+    [Parameter] public string ClientName { get; set; } = string.Empty;
+    [Parameter] public Guid ClientId { get; set; }
+
+    private bool _deleting;
+
+    private async Task Confirm()
+    {
+        _deleting = true;
+        // Wire to DeleteClientCommand when you add it
+        await Task.Delay(200); // placeholder
+        MudDialog.Close(DialogResult.Ok(true));
+    }
+}

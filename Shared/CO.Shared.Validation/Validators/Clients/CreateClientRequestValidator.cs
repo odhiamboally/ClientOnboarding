@@ -1,0 +1,118 @@
+﻿using CO.Domain.Enums;
+using CO.Shared.Dtos.Client;
+using CO.Shared.Extensions;
+using CO.Shared.Validation.Validators.Common;
+using FluentValidation;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace CO.Shared.Validation.Validators.Clients;
+
+public class CreateClientRequestValidator : Validator<CreateClientRequest>
+{
+    public CreateClientRequestValidator()
+    {
+        RuleLevelCascadeMode = CascadeMode.Stop;
+        ClassLevelCascadeMode = CascadeMode.Stop;
+
+        // ── Classification ──────────────────────────────────────────────
+        RuleFor(x => x.ClientType)
+            .IsInEnum().WithMessage("Please select a valid client type.")
+            .NotEmpty().WithMessage("Please select a valid client type.");
+
+        RuleFor(x => x.SegmentType)
+            .IsInEnum().WithMessage("Please select a valid segment type.")
+            .NotEmpty().WithMessage("Please select a valid segment type.");
+
+        RuleFor(x => x.SubSegmentType)
+            .IsInEnum().WithMessage("Please select a valid sub-segment type.")
+            .NotEmpty().WithMessage("Please select a valid sub-segment type.");
+
+        // ── Corporate Details ───────────────────────────────────────────
+        RuleFor(x => x.CompanyName)
+            .NotEmpty().WithMessage("Company name is required.")
+            .MaximumLength(300).WithMessage("Company name cannot exceed 300 characters.");
+
+        RuleFor(x => x.LineOfBusiness)
+            .NotEmpty().WithMessage("Please select a valid line of business.");
+
+        RuleFor(x => x.NatureOfBusiness)
+            .NotEmpty().WithMessage("Nature of business is required.")
+            .MaximumLength(500).WithMessage("Nature of business cannot exceed 500 characters.");
+
+        RuleFor(x => x.IdentificationType)
+            .IsInEnum().WithMessage("Please select a valid identification type.")
+            .NotEmpty().WithMessage("Please select a valid identification type.");
+
+        RuleFor(x => x.RegistrationNumber)
+            .NotEmpty().WithMessage("Registration number is required.")
+            .MaximumLength(100).WithMessage("Registration number cannot exceed 100 characters.");
+
+        RuleFor(x => x.DateOfRegistration)
+            .NotEmpty().WithMessage("Date of registration is required.")
+            .LessThanOrEqualTo(DateTime.Today)
+            .WithMessage("Date of registration cannot be in the future.");
+
+        RuleFor(x => x.BusinessStartedYear)
+            .InclusiveBetween(1800, DateTime.Today.Year)
+            .WithMessage($"Business started year must be between 1800 and {DateTime.Today.Year}.")
+            .When(x => x.BusinessStartedYear.HasValue);
+
+        RuleFor(x => x.NumberOfEmployees)
+            .GreaterThan(0).WithMessage("Number of employees must be greater than 0.")
+            .When(x => x.NumberOfEmployees.HasValue);
+
+        RuleFor(x => x.Website)
+            .MaximumLength(300).WithMessage("Website URL cannot exceed 300 characters.")
+            .Must(uri => Uri.TryCreate(uri, UriKind.Absolute, out _))
+            .WithMessage("Website must be a valid URL.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Website));
+
+        RuleFor(x => x.TINNumber)
+            .NotEmpty().WithMessage("TIN Number is required for corporate clients.")
+            .MaximumLength(50).WithMessage("TIN Number cannot exceed 50 characters.")
+            .When(x => x.ClientType == ClientType.Enterprise.ToDisplayString());
+
+        // ── Relationship Manager & Dates ────────────────────────────────
+        RuleFor(x => x.RelationshipManagerId)
+            .NotEmpty().WithMessage("Relationship Manager is required.");
+
+        RuleFor(x => x.OpenedOn)
+            .NotEmpty().WithMessage("Opened On date is required.")
+            .LessThanOrEqualTo(DateTime.Today.AddDays(1))
+            .WithMessage("Opened On date cannot be in the future.");
+
+        // ── Address ─────────────────────────────────────────────────────
+        RuleFor(x => x.ResidentialAddress)
+            .NotEmpty().WithMessage("Residential address is required.")
+            .MaximumLength(500).WithMessage("Residential address cannot exceed 500 characters.");
+
+        RuleFor(x => x.Country)
+            .NotEmpty().WithMessage("Country is required.")
+            .MaximumLength(100).WithMessage("Country cannot exceed 100 characters.");
+
+        RuleFor(x => x.Region)
+            .NotEmpty().WithMessage("Region is required.")
+            .MaximumLength(100).WithMessage("Region cannot exceed 100 characters.");
+
+        RuleFor(x => x.Ward)
+            .NotEmpty().WithMessage("Ward is required.")
+            .MaximumLength(100).WithMessage("Ward cannot exceed 100 characters.");
+
+        RuleFor(x => x.District)
+            .NotEmpty().WithMessage("District is required.")
+            .MaximumLength(100).WithMessage("District cannot exceed 100 characters.");
+
+        RuleFor(x => x.Mobile)
+            .MaximumLength(30).WithMessage("Mobile number cannot exceed 30 characters.")
+            .Matches(@"^\+?[\d\s\-\(\)]+$").WithMessage("Mobile number format is invalid.")
+            .When(x => !string.IsNullOrWhiteSpace(x.Mobile));
+
+        RuleFor(x => x.EmailId)
+            .EmailAddress().WithMessage("Please enter a valid email address.")
+            .MaximumLength(200).WithMessage("Email address cannot exceed 200 characters.")
+            .When(x => !string.IsNullOrWhiteSpace(x.EmailId));
+    }
+}
+

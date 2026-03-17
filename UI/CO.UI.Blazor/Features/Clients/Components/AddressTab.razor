@@ -1,0 +1,72 @@
+﻿
+
+<MudGrid Spacing="2">
+    <MudItem xs="12">
+        <MudTextField @bind-Value="Model.ResidentialAddress"
+                      Label="Residential Address" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Required />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.BusinessAddress"
+                      Label="Business Address" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.MailingAddress"
+                      Label="Mailing Address" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.Country"
+                      Label="Country" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Required />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.Region"
+                      Label="Region" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Required />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.District"
+                      Label="District" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Required />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.Ward"
+                      Label="Ward" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" Required />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.Street"
+                      Label="Street" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" />
+    </MudItem>
+    <MudItem xs="12" sm="6">
+        <MudTextField @bind-Value="Model.LandMark"
+                      Label="Land Mark" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" />
+    </MudItem>
+    <MudItem xs="6" sm="4">
+        <MudTextField @bind-Value="Model.Mobile"
+                      Label="Mobile" Variant="Variant.Outlined"
+                      Margin="Margin.Dense"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Phone" />
+    </MudItem>
+    <MudItem xs="6" sm="4">
+        <MudTextField @bind-Value="Model.PhoneWork"
+                      Label="Phone (Work)" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" />
+    </MudItem>
+    <MudItem xs="6" sm="4">
+        <MudTextField @bind-Value="Model.EmailId"
+                      Label="Email" Variant="Variant.Outlined"
+                      Margin="Margin.Dense" InputType="InputType.Email"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Email" />
+    </MudItem>
+</MudGrid>
+
+@code {
+    [Parameter] public ClientFormModel Model { get; set; } = default!;
+}

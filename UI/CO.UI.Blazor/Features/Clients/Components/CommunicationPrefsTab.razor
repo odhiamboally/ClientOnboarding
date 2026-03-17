@@ -1,0 +1,26 @@
+﻿
+
+<MudStack Spacing="2" Class="pa-2">
+    <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-2">
+        Configure communication and notification preferences for this client.
+    </MudText>
+    <MudSwitch @bind-Value="Model.CanSendGreetings"
+               Label="Can Send Greetings"
+               Color="Color.Primary" />
+    <MudSwitch @bind-Value="Model.CanSendAssociateSpecialOffer"
+               Label="Can Send Associate Special Offer"
+               Color="Color.Primary" />
+    <MudSwitch @bind-Value="Model.CanSendOurSpecialOffers"
+               Label="Can Send Our Special Offers"
+               Color="Color.Primary" />
+    <MudSwitch @bind-Value="Model.StatementOnline"
+               Label="Statement Online"
+               Color="Color.Primary" />
+    <MudSwitch @bind-Value="Model.MobileAlert"
+               Label="Mobile Alert"
+               Color="Color.Primary" />
+</MudStack>
+
+@code {
+    [Parameter] public ClientFormModel Model { get; set; } = default!;
+}

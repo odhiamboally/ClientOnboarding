@@ -1,0 +1,75 @@
+﻿<MudStack Spacing="2">
+    @if (IsReadOnly && (Directors is null || !Directors.Any()))
+    {
+        <MudStack AlignItems="AlignItems.Center" Class="pa-4">
+            <MudIcon Icon="@Icons.Material.Filled.People"
+                     Style="font-size:2rem; opacity:0.3;" />
+            <MudText Typo="Typo.body2" Color="Color.Secondary">
+                Save the client first, then add directors.
+            </MudText>
+        </MudStack>
+    }
+    else
+    {
+        @if (!IsReadOnly)
+        {
+            <MudStack Row Justify="Justify.FlexEnd">
+                <MudButton Size="Size.Small" Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.PersonAdd"
+                           Disabled>
+                    Add Director (coming soon)
+                </MudButton>
+            </MudStack>
+        }
+
+        <MudTable Items="Directors ?? []"
+                  Dense Hover Elevation="0"
+                  T="DirectorResponse"
+                  Style="border:1px solid var(--mud-palette-divider); border-radius:4px;">
+            <HeaderContent>
+                <MudTh>Name</MudTh>
+                <MudTh>Relation</MudTh>
+                <MudTh>ID Type</MudTh>
+                <MudTh>ID Number</MudTh>
+                <MudTh>Share %</MudTh>
+                <MudTh>Phone</MudTh>
+                <MudTh>Added</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd><MudText Typo="Typo.body2">@context.FullName</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.RelationType</MudText></MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.IdentificationType</MudText></MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption"
+                             Style="font-family:monospace;">
+                        @context.IdentificationNumber
+                    </MudText>
+                </MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">
+                        @(context.SharePercentage.HasValue ? $"{context.SharePercentage:F1}%" : "—")
+                    </MudText>
+                </MudTd>
+                <MudTd><MudText Typo="Typo.caption">@context.PhoneNumber</MudText></MudTd>
+                <MudTd>
+                    <MudText Typo="Typo.caption">
+                        @context.DateAdded.ToString("dd/MM/yyyy")
+                    </MudText>
+                </MudTd>
+            </RowTemplate>
+            <NoRecordsContent>
+                <MudText Typo="Typo.caption" Color="Color.Secondary"
+                         Class="pa-2">
+                    No directors added yet.
+                </MudText>
+            </NoRecordsContent>
+        </MudTable>
+    }
+</MudStack>
+
+@code {
+    [Parameter] public ICollection<DirectorResponse>? Directors { get; set; }
+    [Parameter] public bool IsReadOnly { get; set; }
+    [Parameter] public Guid? ClientId { get; set; }
+}
