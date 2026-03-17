@@ -3,6 +3,7 @@ using CO.Application.Extensions;
 using CO.Application.Mappings;
 using CO.Application.Utilities;
 using CO.Domain.Contracts.Interfaces.Common;
+using CO.Domain.Entities;
 using CO.Domain.Enums;
 using CO.Domain.ValueObjects;
 using CO.Shared.Dtos.Client;
@@ -15,11 +16,21 @@ using System.Text;
 
 namespace CO.Application.Features.Clients.Commands;
 
+
+/// <summary>
+/// Invalidation:
+///   - Direct:  delete the entity entry so the next GetById call fetches fresh data.
+///   - Version: bump the global "clients" version to orphan all list entries.
+///
+/// Both are necessary: without the direct deletion the entity detail page would
+/// still show stale data even after the list refreshes.
+/// </summary>
 public record UpdateClientCommand(Guid Id, UpdateClientRequest UpdateClientRequest, string UserId) 
     : IRequest<AppResponse<ClientResponse>>, ICacheInvalidatorRequest
 {
-    public List<string> CacheKeysToInvalidate => [CacheKeys.ClientById(Id)];    
-    public List<string> CacheVersionKeysToInvalidate => [CacheKeys.ClientListVersion(UserId)]; 
+    public IReadOnlyList<string> DirectInvalidationKeys => [CacheKeys.Entity("clients", Id.ToString())];
+    public IReadOnlyList<string> GroupVersionKeysToInvalidate => [CacheKeys.GroupVersion("clients")];
+        
 }
 
 internal sealed class UpdateClientCommandHandler(IUnitOfWork _unitOfWork, ILogger<UpdateClientCommandHandler> _logger) 

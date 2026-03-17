@@ -20,20 +20,37 @@ using System.Text;
 
 namespace CO.Application.Features.Clients.Queries;
 
-public record GetClientListQuery(ClientSearchRequest SearchRequest, string UserId) 
+
+// ════════════════════════════════════════════════════════════════════════════════
+//  GET CLIENT LIST  (unfiltered, paginated)
+// ════════════════════════════════════════════════════════════════════════════════
+ 
+/// <summary>
+/// Returns the full client list with cursor-based pagination, no search filters.
+///
+/// Cache strategy — VERSIONED list entry:
+///   Key:  "clients:list:{userId}:{versionToken}:{discriminator}"
+///   TTL:  30 minutes
+///   Scope: per user — each RM sees only their relevant data
+///
+/// Invalidation: any mutation command bumps CacheKeys.GroupVersion("clients", userId),
+/// which orphans every versioned entry for that user in O(1).
+/// </summary>
+public record GetClientListQuery(ClientListRequest ClientListRequest, string UserId)
     : IRequest<AppResponse<PagedResponse<ClientResponse, Guid>>>, ICachableRequest
 {
-    
-    public string CacheKeyPrefix => CacheKeys.ClientListVersion(UserId);
-    public string CacheKeySuffix => CacheKeys.ComputeFilterHash(SearchRequest);
+    public string CacheGroup => "clients";
+    public string CacheDiscriminator => 
+        CacheKeys.ClientListDiscriminator(
+            globalSearch: null,
+            clientType: null,
+            segmentType: null,
+            relationshipManagerId: null,
+            cursor: ClientListRequest.Cursor,
+            pageSize: ClientListRequest.PageSize);
+
+    public string? CacheUserId => UserId;
     public bool IsVersioned => true;
-    public bool ShouldCache => !IsFiltered;
-
-
-    private bool IsFiltered =>
-        !string.IsNullOrWhiteSpace(SearchRequest.GlobalSearch) ||
-        SearchRequest.ClientType is not null ||
-        SearchRequest.RelationshipManagerId is not null;
 }
 
 internal sealed class GetClientListQueryHandler(IUnitOfWork _unitOfWork, ILogger<GetClientListQueryHandler> _logger) 
@@ -43,47 +60,31 @@ internal sealed class GetClientListQueryHandler(IUnitOfWork _unitOfWork, ILogger
     {
         try
         {
-            var req = query.SearchRequest;
+            var req = query.ClientListRequest;
 
-            var clientType = req.ClientType?.ToEnum<ClientType>();
-            var segmentType = req.ClientType?.ToEnum<SegmentType>();
-            var subSegmentType = req.ClientType?.ToEnum<SubSegmentType>();
-            var identificationType = req.ClientType?.ToEnum<IdentificationType>();
-            var lineOfBusiness = req.ClientType?.ToEnum<LineOfBusiness>();
-            var status = req.ClientType?.ToEnum<ClientStatus>();
-            Guid? cursor = req.Cursor;
+            // Enforce page size bounds regardless of what the caller sent.
+            // Min 1 — reject nonsense values.
+            // Max 50 — protect the DB and cache from oversized result sets.
+            var pageSize = Math.Clamp(req.PageSize, 1, 50);
 
-            var spec = new ClientSearchSpec(
-                req.GlobalSearch,
-                clientType,
-                segmentType,
-                subSegmentType,
-                identificationType,
-                lineOfBusiness,
-                status,
-                req.RelationshipManagerId,
-                cursor,
-                req.PageSize
+            var cursor = req.Cursor;
 
-            );
-
-            // Note: You might want a CountAsync method that accepts a spec if you need filtered counts
             var totalCount = await _unitOfWork.ClientRepository.CountAsync(ct);
-            var clientEntities = await _unitOfWork.ClientRepository.SearchAsync(spec, ct);
+            var clientEntities = await _unitOfWork.ClientRepository
+                .FindAll()
+                .Where(c => req.Cursor == null || req.Cursor == Guid.Empty || c.Id > req.Cursor)
+                .OrderBy(c => c.Id)
+                .Take(req.PageSize + 1)
+                .ToListAsync(ct);
 
-            // Check if we got the "N + 1" record
-            bool hasNextPage = clientEntities.Count > req.PageSize;
+            var hasNextPage = clientEntities.Count > req.PageSize;
 
-            // If we have an extra record, remove it from the list so we only return the requested PageSize
             if (hasNextPage)
-            {
                 clientEntities.RemoveAt(clientEntities.Count - 1);
-            }
 
-            var items = clientEntities.Select(x => x.ToClientResponse()).ToList();
-
-            // Determine Next Cursor: If no next page, return null to tell UI to disable "Next"
+            var items = clientEntities.Select(c => c.ToClientResponse()).ToList();
             var nextCursor = hasNextPage ? items.LastOrDefault()?.Id : null;
+            var nextCursor1 = hasNextPage ? items[^1].Id : (Guid?)null;
 
             bool isFirstPage = req.Cursor == null || req.Cursor == Guid.Empty;
 

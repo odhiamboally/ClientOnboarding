@@ -6,7 +6,7 @@ using System.Text;
 
 namespace CO.Domain.Entities;
 
-public class BaseEntity : IHasDomainEvents
+public class BaseEntity : ISoftDelete, IHasDomainEvents
 {
     public Guid Id { get; set; } = Guid.CreateVersion7();
     public DateTimeOffset CreatedAt { get; set; } = DateTimeOffset.UtcNow;

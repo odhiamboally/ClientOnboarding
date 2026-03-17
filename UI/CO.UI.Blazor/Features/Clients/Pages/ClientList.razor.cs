@@ -2,6 +2,7 @@
 using CO.Application.Features.Clients.Queries;
 using CO.Application.Features.StaffMembers.Queries;
 using CO.Shared.Dtos.Client;
+using CO.Shared.Dtos.Common;
 using CO.UI.Blazor.Features.Clients.Components;
 using CO.UI.Blazor.Features.Clients.Models;
 using CO.UI.Blazor.Features.Utilities;
@@ -23,13 +24,24 @@ public class ClientListBase : ComponentBase
     protected List<StaffMemberResponse> _staffMembers = [];
     protected ClientSearchModel _searchModel = new();
     protected LookupBundle _lookups = new();
+
     protected bool _loading;
     protected bool _showFilters;
     protected bool _isLastPage = true;
+    protected bool _isFirstPage = true;
     protected int _totalRecords;
-    protected Guid? _nextCursor;
+    protected int _currentPage = 1;
+
+    // Cursor history enables Previous navigation.
+    // Each entry is the cursor that was passed to load that page.
+    // Page 1  → null   (no cursor, start of set)
+    // Page 2  → cursor returned by page 1
+    // Page 3  → cursor returned by page 2  ...etc.
+    private readonly Stack<Guid?> _cursorHistory = new();
+    private Guid? _currentCursor;
 
     protected bool HasActiveFilters =>
+        !string.IsNullOrWhiteSpace(_searchModel.GlobalSearch) ||
         !string.IsNullOrWhiteSpace(_searchModel.ClientType) ||
         !string.IsNullOrWhiteSpace(_searchModel.SegmentType) ||
         !string.IsNullOrWhiteSpace(_searchModel.Status) ||
@@ -42,7 +54,7 @@ public class ClientListBase : ComponentBase
             LoadLookups();
             // Staff can load in the background via service
             _staffMembers = await LookupService.GetRelationshipManagers(UserService.UserId);
-            await LoadClientsAsync(reset: true);
+            await LoadClientsAsync();
 
         }
         catch (Exception)
@@ -69,70 +81,125 @@ public class ClientListBase : ComponentBase
         };
     }
 
-    protected async Task LoadClientsAsync(bool reset = false)
+    protected async Task GoToFirstPage()
+    {
+        _cursorHistory.Clear();
+        _currentCursor = null;
+        _currentPage = 1;
+        await LoadClientsAsync();
+    }
+
+    protected async Task GoToPreviousPage()
+    {
+        if (_cursorHistory.Count > 0)
+        {
+            _currentCursor = _cursorHistory.Pop();
+            _currentPage = Math.Max(1, _currentPage - 1);
+            await LoadClientsAsync();
+        }
+    }
+
+    protected async Task GoToNextPage()
+    {
+        if (!_isLastPage && _clients.Count > 0)
+        {
+            // Push the cursor we used to load the current page so we can go back.
+            _cursorHistory.Push(_currentCursor);
+            _currentCursor = _clients[^1].Id;  // last item on current page
+            _currentPage++;
+            await LoadClientsAsync();
+        }
+    }
+
+    private async Task LoadClientsAsync()
     {
         _loading = true;
 
         try
         {
-            if (reset)
-            {
-                _clients.Clear();
-                _nextCursor = null;
-                _totalRecords = 0;
-            }
-
-            // Map the search model to the query request
-            var clientSearchRequest = _searchModel.ToRequest();
-            var request = clientSearchRequest with { Cursor = _nextCursor };
-
-            var result = await Sender.Send(new GetClientListQuery(request, UserService.UserId));
-
-
+            // Dispatch to the correct query based on whether any filter is active.
+            // Both queries return the same AppResponse<PagedResponse<...>> shape
+            // so the handling code below is identical.
+            var result = HasActiveFilters ? await SearchClientsAsync() : await ListClientsAsync();
             if (result.Successful && result.Data is not null)
             {
                 var data = result.Data;
+                _clients.Clear();
                 _clients.AddRange(data.Items);
-                _nextCursor = data.NextCursor;
+                _currentCursor = data.NextCursor;
+                _isFirstPage = data.IsFirstPage;
                 _isLastPage = data.IsLastPage;
+                _totalRecords = data.TotalRecords;
 
-                // Only update total on first page — it doesn't change on subsequent loads
-                if (reset)
-                    _totalRecords = data.TotalRecords;
             }
             else
             {
                 Snackbar.Add(result.Message ?? "Failed to load clients.", Severity.Error);
             }
 
-            _loading = false;
         }
         catch (Exception)
         {
 
             throw;
         }
+        finally
+        {
+            _loading = false;
+            StateHasChanged();
+        }
 
     }
 
-    protected async Task ResetAndLoad()
+    private Task<AppResponse<PagedResponse<ClientResponse, Guid>>> ListClientsAsync()
     {
-        //_searchModel.Cursor = _nextCursor;
-        _searchModel.Cursor = null;
-        await LoadClientsAsync(reset: true);
+        var request = new ClientListRequest { Cursor = _currentCursor, PageSize = _searchModel.PageSize };
+        return Sender.Send(new GetClientListQuery(request, UserService.UserId));
     }
 
-    protected async Task LoadMore() => await LoadClientsAsync(reset: false);
+    private Task<AppResponse<PagedResponse<ClientResponse, Guid>>> SearchClientsAsync()
+    {
+        //var request = new ClientSearchRequest
+        //{
+        //    GlobalSearch = _searchModel.GlobalSearch,
+        //    ClientType = _searchModel.ClientType,
+        //    SegmentType = _searchModel.SegmentType,
+        //    RelationshipManagerId = _searchModel.RelationshipManagerId,
+        //    Cursor = _nextCursor,
+        //    PageSize = _searchModel.PageSize
+        //};
 
-    protected void ToggleFilters() => _showFilters = !_showFilters;
+        var clientSearchRequest = _searchModel.ToRequest();
+        var request = clientSearchRequest with { Cursor = _currentCursor };
+
+        return Sender.Send(new SearchClientListQuery(request, UserService.UserId));
+    }
+
+    protected async Task ApplyFilters()
+    {
+        ResetPaginationState();
+        await LoadClientsAsync();
+    }
 
     protected async Task ClearFilters()
     {
         _searchModel.Reset();
         _showFilters = false;
-        await LoadClientsAsync(reset: true);
+        ResetPaginationState();
+        await LoadClientsAsync();
     }
 
+    protected void ToggleFilters() => _showFilters = !_showFilters;
+
+    private void ResetPaginationState()
+    {
+        _cursorHistory.Clear();
+        _searchModel.Cursor = null;
+        _currentCursor = null;
+        _currentPage = 1;
+    }
+
+    
     // ── Modals ────────────────────────────────────────────────────────────────
 
     protected async Task OpenFormModal(ClientResponse? client, int tabIndex)
@@ -156,7 +223,10 @@ public class ClientListBase : ComponentBase
         var result = await dialog.Result;
 
         if (result is { Canceled: false })
-            await LoadClientsAsync(reset: true);
+        {
+            ResetPaginationState();
+            await LoadClientsAsync();
+        }
     }
 
     protected async Task OpenViewModal(ClientResponse client, int tabIndex)
@@ -193,7 +263,8 @@ public class ClientListBase : ComponentBase
         if (result is { Canceled: false })
         {
             Snackbar.Add($"{client.CompanyName} deleted.", Severity.Success);
-            await LoadClientsAsync(reset: true);
+            ResetPaginationState();
+            await LoadClientsAsync();
         }
     }
 
@@ -206,5 +277,7 @@ public class ClientListBase : ComponentBase
         "Closed" => Color.Dark,
         _ => Color.Default
     };
+
+
 }
 

@@ -1,4 +1,5 @@
-﻿using CO.Domain.Contracts.Interfaces.Repositories;
+﻿using CO.Domain.Contracts.Interfaces.Common;
+using CO.Domain.Contracts.Interfaces.Repositories;
 using CO.Domain.Contracts.Specifications;
 using CO.Persistence.DataContext;
 using CO.Persistence.Extensions;
@@ -33,6 +34,21 @@ public class Repository<T>(DBContext context) : IRepository<T> where T : class
         return entity;
     }
 
+    public async Task<T> SoftDeleteAsync(Guid Id, CancellationToken ct = default)
+    {
+        var entity = await FindByIdAsync(Id, ct) ?? throw new Exception($"Entity with id {Id} not found");
+        if (entity is ISoftDelete softDeletableEntity) 
+        {
+            softDeletableEntity.IsDeleted = true;
+            _context.Set<T>().Update(entity); 
+        }
+        else
+        {
+            throw new NotSupportedException($"Entity type {typeof(T).Name} does not support this method.");
+        }
+        return entity;
+    }
+
     public async Task<T> DeleteAsync(string Id, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(Id))
@@ -41,6 +57,26 @@ public class Repository<T>(DBContext context) : IRepository<T> where T : class
         if (entity == null)
             throw new Exception($"Entity with id {Id} not found");
         _context.Set<T>().Remove(entity);
+        return entity;
+    }
+    
+    public async Task<T> SoftDeleteAsync(string Id, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(Id))
+            throw new ArgumentException("Id cannot be null or empty", nameof(Id));
+
+        Guid guidId = Guid.Parse(Id); 
+
+        var entity = await FindByIdAsync(guidId, ct) ?? throw new Exception($"Entity with id {Id} not found");
+        if (entity is ISoftDelete softDeletableEntity) 
+        {
+            softDeletableEntity.IsDeleted = true;
+            _context.Set<T>().Update(entity); 
+        }
+        else
+        {
+            throw new NotSupportedException($"Entity type {typeof(T).Name} does not support this method");
+        }
         return entity;
     }
 
@@ -63,7 +99,7 @@ public class Repository<T>(DBContext context) : IRepository<T> where T : class
 
     public async Task<List<T>> SearchAsync<TCursor>(ISpecification<T, TCursor> spec, CancellationToken ct = default)
     {
-        return await _context.Set<T>().Specify(spec).ToListAsync(ct);
+        return await _context.Set<T>().Specify(spec).AsNoTracking().ToListAsync(ct);
     }
 
     public async Task<T> UpdateAsync(T entity)
