@@ -9,18 +9,13 @@
   <ItemGroup>
     <PackageReference Include="FluentValidation" Version="12.1.1" />
     <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.5" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.5" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\Application\CO.Application\CO.Application.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Microsoft.Extensions.Caching.Abstractions">
-      <HintPath>..\..\..\..\..\nuget-packages\microsoft.extensions.caching.abstractions\10.0.5\lib\net10.0\Microsoft.Extensions.Caching.Abstractions.dll</HintPath>
-    </Reference>
   </ItemGroup>
 
 </Project>
