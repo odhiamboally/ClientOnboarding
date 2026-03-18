@@ -25,6 +25,7 @@ public record SearchClientListQuery(ClientSearchRequest SearchRequest, string Us
             SearchRequest.GlobalSearch,
             SearchRequest.ClientType,
             SearchRequest.SegmentType,
+            SearchRequest.Status,
             SearchRequest.RelationshipManagerId,
             SearchRequest.Cursor,
             SearchRequest.PageSize);

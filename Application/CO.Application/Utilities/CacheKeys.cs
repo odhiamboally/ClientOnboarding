@@ -76,12 +76,12 @@ public static class CacheKeys
         string? globalSearch,
         string? clientType,
         string? segmentType,
+        string? status,
         Guid? relationshipManagerId,
         Guid? cursor,
         int pageSize)
-        => HashFilter(
-            $"{globalSearch}|{clientType}|{segmentType}|{relationshipManagerId}|{cursor}|{pageSize}");
-
+        => HashFilter($"{globalSearch}|{clientType}|{segmentType}|{status}|{relationshipManagerId}|{cursor}|{pageSize}");
+        
     /// <summary>Discriminator for a staff member list query.</summary>
     public static string StaffListDiscriminator(Guid? cursor, int pageSize)
         => HashFilter($"{cursor}|{pageSize}");

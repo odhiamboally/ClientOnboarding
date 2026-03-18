@@ -45,6 +45,7 @@ public record GetClientListQuery(ClientListRequest ClientListRequest, string Use
             globalSearch: null,
             clientType: null,
             segmentType: null,
+            status: null,
             relationshipManagerId: null,
             cursor: ClientListRequest.Cursor,
             pageSize: ClientListRequest.PageSize);

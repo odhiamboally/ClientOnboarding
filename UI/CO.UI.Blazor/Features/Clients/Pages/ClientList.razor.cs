@@ -39,6 +39,7 @@ public class ClientListBase : ComponentBase
     // Page 2  → cursor returned by page 1
     // Page 3  → cursor returned by page 2  ...etc.
     private readonly Stack<Guid?> _cursorHistory = new();
+    private Guid? _cursor;
     private Guid? _currentCursor;
 
     protected bool HasActiveFilters =>
@@ -102,14 +103,12 @@ public class ClientListBase : ComponentBase
 
     protected async Task GoToNextPage()
     {
-        if (!_isLastPage && _clients.Count > 0)
-        {
-            // Push the cursor we used to load the current page so we can go back.
-            _cursorHistory.Push(_currentCursor);
-            _currentCursor = _clients[^1].Id;  // last item on current page
-            _currentPage++;
-            await LoadClientsAsync();
-        }
+        if (_isLastPage || _cursor is null) return;
+
+        _cursorHistory.Push(_currentCursor);
+        _currentCursor = _cursor;   
+        _currentPage++;
+        await LoadClientsAsync();
     }
 
     private async Task LoadClientsAsync()
@@ -130,6 +129,7 @@ public class ClientListBase : ComponentBase
                 _isFirstPage = data.IsFirstPage;
                 _isLastPage = data.IsLastPage;
                 _totalRecords = data.TotalRecords;
+                _cursor = data.NextCursor == Guid.Empty ? null : data.NextCursor;
 
             }
             else
@@ -160,9 +160,9 @@ public class ClientListBase : ComponentBase
     private Task<AppResponse<PagedResponse<ClientResponse, Guid>>> SearchClientsAsync()
     {
         var clientSearchRequest = _searchModel.ToRequest();
-        var request = clientSearchRequest with { Cursor = _currentCursor };
+        clientSearchRequest = clientSearchRequest with { Cursor = _currentCursor };
 
-        return Sender.Send(new SearchClientListQuery(request, UserService.UserId));
+        return Sender.Send(new SearchClientListQuery(clientSearchRequest, UserService.UserId));
     }
 
     protected async Task ApplyFilters()
@@ -184,7 +184,7 @@ public class ClientListBase : ComponentBase
     private void ResetPaginationState()
     {
         _cursorHistory.Clear();
-        _searchModel.Cursor = null;
+        //_searchModel.Cursor = null;
         _currentCursor = null;
         _currentPage = 1;
     }
