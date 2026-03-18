@@ -67,8 +67,6 @@ internal sealed class GetClientListQueryHandler(IUnitOfWork _unitOfWork, ILogger
             // Max 50 — protect the DB and cache from oversized result sets.
             var pageSize = Math.Clamp(req.PageSize, 1, 50);
 
-            var cursor = req.Cursor;
-
             var totalCount = await _unitOfWork.ClientRepository.CountAsync(ct);
             var clientEntities = await _unitOfWork.ClientRepository
                 .FindAll()
@@ -83,8 +81,7 @@ internal sealed class GetClientListQueryHandler(IUnitOfWork _unitOfWork, ILogger
                 clientEntities.RemoveAt(clientEntities.Count - 1);
 
             var items = clientEntities.Select(c => c.ToClientResponse()).ToList();
-            var nextCursor = hasNextPage ? items.LastOrDefault()?.Id : null;
-            var nextCursor1 = hasNextPage ? items[^1].Id : (Guid?)null;
+            var nextCursor = hasNextPage ? items[^1].Id : (Guid?)null;
 
             bool isFirstPage = req.Cursor == null || req.Cursor == Guid.Empty;
 
@@ -92,7 +89,7 @@ internal sealed class GetClientListQueryHandler(IUnitOfWork _unitOfWork, ILogger
                 items,
                 totalCount,
                 1,
-                req.PageSize,
+                pageSize,
                 isFirstPage,
                 nextCursor ?? Guid.Empty
             );

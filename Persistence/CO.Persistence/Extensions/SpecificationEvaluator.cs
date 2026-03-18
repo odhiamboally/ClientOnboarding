@@ -18,7 +18,7 @@ internal static class SpecificationEvaluator<T, TCursor> where T : class
         var query = inputQuery;
 
         // Apply Tracking and Query Splitting settings from Spec
-        if (spec.AsNoTracking) query = query.AsNoTracking();
+        //if (spec.AsNoTracking) query = query.AsNoTracking(); - Already done in Repository SearchAsync
         if (spec.UseSplitQuery) query = query.AsSplitQuery();
 
         // Filters
@@ -61,37 +61,36 @@ internal static class SpecificationEvaluator<T, TCursor> where T : class
                 var t when t == typeof(Guid) => cursorValue is Guid g ? g : Guid.Parse(cursorValue!.ToString()!),
                 var t when t.IsEnum => Enum.Parse(t, cursorValue!.ToString()!),
                 _ => Convert.ChangeType(cursorValue, underlyingType)
+                ?? throw new InvalidOperationException($"Cannot convert cursor value '{cursorValue}' to {underlyingType.Name}")
             };
 
             var constant = Expression.Constant(convertedValue, underlyingType);
 
             // Build comparison using CompareTo for strings/Guids/numbers
-            var compareToMethod = underlyingType.GetMethod("CompareTo", [underlyingType]);
-            if (compareToMethod != null)
+            var compareToMethod = underlyingType.GetMethod("CompareTo", [underlyingType]) 
+                ?? throw new InvalidOperationException($"Type {underlyingType.Name} does not support CompareTo — cannot build cursor predicate for property '{propertyName}'");
+
+            // Handle Nullable types by accessing .Value
+            Expression left = propExpr.Type != underlyingType
+                ? Expression.Property(propExpr, "Value")
+                : propExpr;
+
+            var call = Expression.Call(left, compareToMethod, constant);
+            var comparison = Expression.GreaterThan(call, Expression.Constant(0));
+
+            // If nullable, add the .HasValue check
+            if (Nullable.GetUnderlyingType(propExpr.Type) != null)
             {
-                // Handle Nullable types by accessing .Value
-                Expression left = propExpr.Type != underlyingType
-                    ? Expression.Property(propExpr, "Value")
-                    : propExpr;
-
-                var call = Expression.Call(left, compareToMethod, constant);
-                var comparison = Expression.GreaterThan(call, Expression.Constant(0));
-
-                // If nullable, add the .HasValue check
-                if (Nullable.GetUnderlyingType(propExpr.Type) != null)
-                {
-                    var hasValue = Expression.Property(propExpr, "HasValue");
-                    return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(hasValue, comparison), param);
-                }
-
-                return Expression.Lambda<Func<T, bool>>(comparison, param);
+                var hasValue = Expression.Property(propExpr, "HasValue");
+                return Expression.Lambda<Func<T, bool>>(Expression.AndAlso(hasValue, comparison), param);
             }
 
-            return null;
+            return Expression.Lambda<Func<T, bool>>(comparison, param);
+
         }
-        catch 
+        catch(Exception) 
         { 
-            return null; 
+            throw; 
         }
     }
 

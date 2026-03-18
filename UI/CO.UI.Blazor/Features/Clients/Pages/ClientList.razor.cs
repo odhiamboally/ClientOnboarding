@@ -127,7 +127,6 @@ public class ClientListBase : ComponentBase
                 var data = result.Data;
                 _clients.Clear();
                 _clients.AddRange(data.Items);
-                _currentCursor = data.NextCursor;
                 _isFirstPage = data.IsFirstPage;
                 _isLastPage = data.IsLastPage;
                 _totalRecords = data.TotalRecords;
@@ -160,16 +159,6 @@ public class ClientListBase : ComponentBase
 
     private Task<AppResponse<PagedResponse<ClientResponse, Guid>>> SearchClientsAsync()
     {
-        //var request = new ClientSearchRequest
-        //{
-        //    GlobalSearch = _searchModel.GlobalSearch,
-        //    ClientType = _searchModel.ClientType,
-        //    SegmentType = _searchModel.SegmentType,
-        //    RelationshipManagerId = _searchModel.RelationshipManagerId,
-        //    Cursor = _nextCursor,
-        //    PageSize = _searchModel.PageSize
-        //};
-
         var clientSearchRequest = _searchModel.ToRequest();
         var request = clientSearchRequest with { Cursor = _currentCursor };
 
@@ -263,12 +252,11 @@ public class ClientListBase : ComponentBase
         var dialogResult = await dialog.Result;
         if (dialogResult is { Canceled: false })
         {
-            var result = await Sender.Send(new DeleteClientCommand(client.Id));
+            var result = await Sender.Send(new DeleteClientCommand(client.Id, UserService.UserId));
 
             if (result.Successful)
             {
                 Snackbar.Add($"{client.CompanyName} deleted.", Severity.Success);
-                ResetPaginationState();
                 await LoadClientsAsync();
             }
             else

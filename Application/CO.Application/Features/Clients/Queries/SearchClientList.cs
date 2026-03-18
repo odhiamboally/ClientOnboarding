@@ -43,12 +43,14 @@ internal sealed class SearchClientListQueryHandler(IUnitOfWork _unitOfWork, ILog
         {
             var req = query.SearchRequest;
 
+            var pageSize = Math.Clamp(req.PageSize, 1, 50);
+
             var clientType = req.ClientType?.ToEnum<ClientType>();
-            var segmentType = req.ClientType?.ToEnum<SegmentType>();
-            var subSegmentType = req.ClientType?.ToEnum<SubSegmentType>();
-            var identificationType = req.ClientType?.ToEnum<IdentificationType>();
-            var lineOfBusiness = req.ClientType?.ToEnum<LineOfBusiness>();
-            var status = req.ClientType?.ToEnum<ClientStatus>();
+            var segmentType = req.SegmentType?.ToEnum<SegmentType>();
+            var subSegmentType = req.SubSegmentType?.ToEnum<SubSegmentType>();
+            var identificationType = req.IdentificationType?.ToEnum<IdentificationType>();
+            var lineOfBusiness = req.LineOfBusiness?.ToEnum<LineOfBusiness>();
+            var status = req.Status?.ToEnum<ClientStatus>();
 
             var spec = new ClientSearchSpec(
                 req.GlobalSearch,
@@ -60,21 +62,23 @@ internal sealed class SearchClientListQueryHandler(IUnitOfWork _unitOfWork, ILog
                 status,
                 req.RelationshipManagerId,
                 req.Cursor,
-                req.PageSize
+                pageSize
 
             );
 
-            // Note: You might want a CountAsync method that accepts a spec if you need filtered counts
-            var totalCount = await _unitOfWork.ClientRepository.CountAsync(ct);
+            var totalCount = await _unitOfWork.ClientRepository.CountAsync(spec, ct);
             var clientEntities = await _unitOfWork.ClientRepository.SearchAsync(spec, ct);
 
-            bool hasNextPage = clientEntities.Count > req.PageSize;
+            bool hasNextPage = clientEntities.Count > pageSize;
             if (hasNextPage)
                 clientEntities.RemoveAt(clientEntities.Count - 1);
 
             var items = clientEntities.Select(x => x.ToClientResponse()).ToList();
 
-            var nextCursor = hasNextPage ? items.LastOrDefault()?.Id : null;
+            var nextCursor = hasNextPage ? items[^1].Id : (Guid?)null;
+
+            // Display sort — purely cosmetic, does not affect pagination
+            items = [.. items.OrderBy(x => x.ClientNumber, StringComparer.OrdinalIgnoreCase)];
 
             bool isFirstPage = req.Cursor == null || req.Cursor == Guid.Empty;
 
@@ -82,7 +86,7 @@ internal sealed class SearchClientListQueryHandler(IUnitOfWork _unitOfWork, ILog
                 items,
                 totalCount,
                 1,
-                req.PageSize,
+                pageSize,
                 isFirstPage,
                 nextCursor ?? Guid.Empty
             );

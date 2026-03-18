@@ -11,6 +11,7 @@ public interface IRepository<T> where T : class
 {
     Task<T> CreateAsync(T entity, CancellationToken ct = default);
     Task<int> CountAsync(CancellationToken ct = default);
+    Task<int> CountAsync<TCursor>(ISpecification<T, TCursor> spec, CancellationToken ct = default);
     Task<T> DeleteAsync(Guid Id, CancellationToken ct = default);
     Task<T> SoftDeleteAsync(Guid Id, CancellationToken ct = default);
     Task<T> DeleteAsync(string Id, CancellationToken ct = default);

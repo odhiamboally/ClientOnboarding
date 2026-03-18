@@ -60,7 +60,7 @@ public sealed class CacheInvalidationBehavior<TRequest, TResponse>(
         return response;
     }
 
-    private static string GenerateVersion()
-        => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+    private static string GenerateVersion() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        
 }
 

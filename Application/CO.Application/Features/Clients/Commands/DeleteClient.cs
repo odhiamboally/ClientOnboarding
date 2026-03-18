@@ -15,11 +15,11 @@ namespace CO.Application.Features.Clients.Commands;
 /// <summary>
 /// Same invalidation pattern as Update: remove the entity entry + bump the list version.
 /// </summary>
-public record DeleteClientCommand(Guid ClientId) : IRequest<AppResponse<bool>>, ICacheInvalidatorRequest
+public record DeleteClientCommand(Guid ClientId, string UserId) : IRequest<AppResponse<bool>>, ICacheInvalidatorRequest
     
 {
     public IReadOnlyList<string> DirectInvalidationKeys => [CacheKeys.Entity("clients", ClientId.ToString())];
-    public IReadOnlyList<string> GroupVersionKeysToInvalidate => [CacheKeys.GroupVersion("clients")];
+    public IReadOnlyList<string> GroupVersionKeysToInvalidate => [CacheKeys.GroupVersion("clients", UserId)];
         
 }
 

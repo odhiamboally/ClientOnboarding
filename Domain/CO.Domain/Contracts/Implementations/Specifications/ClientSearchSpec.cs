@@ -48,10 +48,11 @@ public class ClientSearchSpec : Specification<Client, Guid>, IClientSearchSpec
         // Only set the cursor if it actually exists. If null, the Evaluator knows to start from the beginning.
         if (cursor.HasValue && cursor.Value != Guid.Empty)
         {
-            SetCursor(cursor.Value, "Id");
+            SetCursor(cursor.Value, c => c.Id > cursor.Value);
+            //SetCursor(cursor.Value, "Id");
         }
 
-        SetTake(pageSize);
+        SetTake(Math.Clamp(pageSize, 1, 50)); // defensive — spec shouldn't trust its caller
         EnableSplitQuery();
     }
 

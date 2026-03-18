@@ -23,6 +23,19 @@ public class Repository<T>(DBContext context) : IRepository<T> where T : class
 
     public virtual async Task<int> CountAsync(CancellationToken ct = default) => await _context.Set<T>().CountAsync(ct);
 
+    public virtual async Task<int> CountAsync<TCursor>(ISpecification<T, TCursor> spec, CancellationToken ct = default)
+    {
+        var query = _context.Set<T>().AsNoTracking();
+
+        // Apply filters only — no ordering, no take, no includes
+        if (spec.Criteria != null)
+            query = spec.Criteria.Aggregate(query, (current, criteria) => current.Where(criteria));
+
+        // Cursor filter is intentionally excluded — count should reflect total matching records, not records after the current page position
+
+        return await query.CountAsync(ct);
+    }
+
     public async Task<T> DeleteAsync(Guid Id, CancellationToken ct = default)
     {
         var entity = await FindByIdAsync(Id, ct);
