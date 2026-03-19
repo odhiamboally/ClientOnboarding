@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace CO.Application.Utilities;
 
@@ -50,8 +51,12 @@ public static class CacheKeys
     /// Called by <see cref="Behaviours.CachingBehavior{TRequest,TResponse}"/>
     /// after it has resolved the version token — not by queries directly.
     /// </summary>
-    internal static string VersionedList(string group, string scope, string versionToken, string discriminator)
-        => $"{group}:list:{scope}:{versionToken}:{discriminator}";
+    internal static string VersionedList(
+        string group, 
+        string scope, 
+        string versionToken, 
+        string discriminator) => $"{group}:list:{scope}:{versionToken}:{discriminator}";
+        
 
     // ── Discriminator helpers ──────────────────────────────────────────────────
 
@@ -71,18 +76,12 @@ public static class CacheKeys
 
     // ── Named discriminator builders (one per filterable entity) ──────────────
 
-    /// <summary>Discriminator for a client list/search query.</summary>
-    public static string ClientListDiscriminator(
-        string? globalSearch,
-        string? clientType,
-        string? segmentType,
-        string? status,
-        Guid? relationshipManagerId,
-        Guid? cursor,
-        int pageSize)
-        => HashFilter($"{globalSearch}|{clientType}|{segmentType}|{status}|{relationshipManagerId}|{cursor}|{pageSize}");
-        
-    /// <summary>Discriminator for a staff member list query.</summary>
-    public static string StaffListDiscriminator(Guid? cursor, int pageSize)
-        => HashFilter($"{cursor}|{pageSize}");
+
+    public static string Discriminator<T>(T filter) where T : class
+    {
+        var json = JsonSerializer.Serialize(filter);
+        return HashFilter(json);
+    }
+
+    
 }

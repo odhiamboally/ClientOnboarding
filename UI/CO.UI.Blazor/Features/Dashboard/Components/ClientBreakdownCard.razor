@@ -1,0 +1,114 @@
+﻿@* Tab switcher — By Segment and By Client Type share one card.
+   Each view shows horizontal bars: label | bar proportional to total | count.
+   Bars are colour-stacked by status so you see the composition at a glance. *@
+
+@using MudBlazor
+
+<div style="background:var(--mud-palette-surface);
+    border:1px solid var(--mud-palette-divider);
+    border-radius:10px;
+    padding:20px 22px;
+    height:100%;
+    display:flex;
+    flex-direction:column;">
+
+    @* Header with tab toggle *@
+    <div style="display:flex; align-items:center;
+        justify-content:space-between; margin-bottom:16px; flex-shrink:0">
+        <p style="font-size:11px;font-weight:500;color:var(--mud-palette-text-secondary);
+            text-transform:uppercase;letter-spacing:.07em;margin:0">
+            Client breakdown
+        </p>
+        <div style="display:flex; gap:4px;">
+            <button style="font-size:11px; padding:4px 12px; border-radius:20px; cursor:pointer;
+                border:1px solid @(_tab == 0 ? "#594AE2" : "var(--mud-palette-divider)");
+                background:@(_tab == 0 ? "#594AE2" : "transparent");
+                color:@(_tab == 0 ? "#fff" : "var(--mud-palette-text-secondary)");"
+                    @onclick="() => _tab = 0">
+                By segment
+            </button>
+            <button style="font-size:11px; padding:4px 12px; border-radius:20px; cursor:pointer;
+                border:1px solid @(_tab == 1 ? "#594AE2" : "var(--mud-palette-divider)");
+                background:@(_tab == 1 ? "#594AE2" : "transparent");
+                color:@(_tab == 1 ? "#fff" : "var(--mud-palette-text-secondary)");"
+                    @onclick="() => _tab = 1">
+                By client type
+            </button>
+        </div>
+    </div>
+
+    @* Scrollable bar list *@
+    <div style="flex:1; overflow-y:auto; min-height:0;">
+
+        @{
+            var groups = _tab == 0 ? Segments : ClientTypes;
+        }
+
+        @foreach (var group in groups)
+        {
+            <div style="margin-bottom:14px">
+
+                @* Label + total *@
+                <div style="display:flex; justify-content:space-between;
+                    align-items:baseline; margin-bottom:5px">
+                    <span style="font-size:13px; font-weight:500;
+                        color:var(--mud-palette-text-primary)">
+                        @group.Label
+                    </span>
+                    <span style="font-size:12px; color:var(--mud-palette-text-secondary)">
+                        @group.Total
+                    </span>
+                </div>
+
+                @* Stacked horizontal bar *@
+                <div style="height:10px; border-radius:5px; overflow:hidden;
+                    display:flex; gap:2px; background:var(--mud-palette-divider);">
+                    @foreach (var s in group.ByStatus)
+                    {
+                        var w = MaxTotal == 0 ? 0 : (int)Math.Round(s.Count * 100.0 / MaxTotal);
+                        <div style="height:100%; min-width:3px; border-radius:3px;
+                            width:@(w)%; background:@s.Color;
+                            transition:width .4s ease;">
+                        </div>
+                    }
+                </div>
+
+                @* Status chips *@
+                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:5px">
+                    @foreach (var s in group.ByStatus)
+                    {
+                        <span style="display:inline-flex; align-items:center; gap:3px;
+                            font-size:10px; padding:1px 6px; border-radius:20px;
+                            border:1px solid var(--mud-palette-divider);
+                            color:var(--mud-palette-text-secondary);
+                            white-space:nowrap">
+                            <span style="width:5px; height:5px; border-radius:50%;
+                            flex-shrink:0; background:@s.Color"></span>
+                            @s.Status: @s.Count
+                        </span>
+                    }
+                </div>
+
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public IReadOnlyList<BreakdownGroup> Segments { get; set; } = default!;
+    [Parameter, EditorRequired] public IReadOnlyList<BreakdownGroup> ClientTypes { get; set; } = default!;
+
+    private int _tab = 0;  // 0 = segment, 1 = client type
+
+    // Bar widths are relative to the largest group across both views
+    // so switching tabs doesn't cause bar widths to jump around
+    private int MaxTotal
+    {
+        get
+        {
+            var all = Segments.Concat(ClientTypes);
+            return all.Any() ? all.Max(g => g.Total) : 1;
+        }
+    }
+}

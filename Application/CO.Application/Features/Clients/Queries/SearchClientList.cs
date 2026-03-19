@@ -20,15 +20,17 @@ public record SearchClientListQuery(ClientSearchRequest SearchRequest, string Us
 {
 
     public string CacheGroup => "clients";
-    public string CacheDiscriminator => 
-        CacheKeys.ClientListDiscriminator(
-            SearchRequest.GlobalSearch,
-            SearchRequest.ClientType,
-            SearchRequest.SegmentType,
-            SearchRequest.Status,
-            SearchRequest.RelationshipManagerId,
-            SearchRequest.Cursor,
-            SearchRequest.PageSize);
+    public string Discriminator => CacheKeys.Discriminator(new ClientSearchRequest(
+        SearchRequest.GlobalSearch,
+        SearchRequest.ClientType,
+        SearchRequest.SegmentType,
+        SearchRequest.SubSegmentType,
+        SearchRequest.IdentificationType,
+        SearchRequest.LineOfBusiness,
+        SearchRequest.Status,
+        SearchRequest.RelationshipManagerId,
+        SearchRequest.Cursor,
+        SearchRequest.PageSize));
 
     public string? CacheUserId => UserId;
     public bool IsVersioned => true;

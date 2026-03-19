@@ -40,16 +40,7 @@ public record GetClientListQuery(ClientListRequest ClientListRequest, string Use
     : IRequest<AppResponse<PagedResponse<ClientResponse, Guid>>>, ICachableRequest
 {
     public string CacheGroup => "clients";
-    public string CacheDiscriminator => 
-        CacheKeys.ClientListDiscriminator(
-            globalSearch: null,
-            clientType: null,
-            segmentType: null,
-            status: null,
-            relationshipManagerId: null,
-            cursor: ClientListRequest.Cursor,
-            pageSize: ClientListRequest.PageSize);
-
+    public string Discriminator => CacheKeys.Discriminator(new ClientListRequest(ClientListRequest.Cursor, ClientListRequest.PageSize));
     public string? CacheUserId => UserId;
     public bool IsVersioned => true;
 }
@@ -63,14 +54,12 @@ internal sealed class GetClientListQueryHandler(IUnitOfWork _unitOfWork, ILogger
         {
             var req = query.ClientListRequest;
 
-            // Enforce page size bounds regardless of what the caller sent.
-            // Min 1 — reject nonsense values.
-            // Max 50 — protect the DB and cache from oversized result sets.
             var pageSize = Math.Clamp(req.PageSize, 1, 50);
 
             var totalCount = await _unitOfWork.ClientRepository.CountAsync(ct);
             var clientEntities = await _unitOfWork.ClientRepository
                 .FindAll()
+                .Include(c => c.RelationshipManager)
                 .Where(c => req.Cursor == null || req.Cursor == Guid.Empty || c.Id > req.Cursor)
                 .OrderBy(c => c.Id)
                 .Take(req.PageSize + 1)

@@ -27,7 +27,7 @@ namespace CO.Application.Features.Clients.Queries;
 public record GetClientByIdQuery(Guid Id) : IRequest<AppResponse<ClientResponse>>, ICachableRequest
 {
     public string CacheGroup => "clients";
-    public string CacheDiscriminator => Id.ToString();
+    public string Discriminator => Id.ToString();
     public string? CacheUserId => null;   // entity cache is shared across users
     public bool IsVersioned => false;  // invalidated directly by exact key
 }

@@ -18,7 +18,7 @@ namespace CO.Application.Features.StaffMembers.Queries;
 public record GetStaffMembersQuery(string UserId) : IRequest<AppResponse<List<StaffMemberResponse>>>, ICachableRequest
 {
     public string CacheGroup => "staff-members";
-    public string CacheDiscriminator => "all";           // no filter — one entry per user
+    public string Discriminator => "all";           // no filter — one entry per user
     public string? CacheUserId => UserId;
     public bool IsVersioned => false;
 }

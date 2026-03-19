@@ -27,9 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Features\Dashboard\Components\" />
     <Folder Include="Features\Dashboard\Models\" />
-    <Folder Include="Features\Dashboard\Pages\" />
   </ItemGroup>
 
 </Project>

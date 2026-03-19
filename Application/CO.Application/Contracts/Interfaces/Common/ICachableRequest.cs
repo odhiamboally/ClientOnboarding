@@ -31,7 +31,8 @@ public interface ICachableRequest
     /// For list/search:     use a hash of the filter/pagination parameters.
     ///                      See <see cref="Utilities.CacheKeys.HashFilter"/>.
     /// </summary>
-    string CacheDiscriminator { get; }
+    //string CacheDiscriminator { get; }
+    string Discriminator { get; }
 
     /// <summary>
     /// Scopes the cache entry to a specific user.

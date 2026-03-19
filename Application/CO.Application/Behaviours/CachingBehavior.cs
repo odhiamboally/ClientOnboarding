@@ -38,7 +38,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(ICacheService cache, IL
         // ── 1. Bypass check ────────────────────────────────────────────────────
         if (request.BypassCache)
         {
-            logger.LogDebug("[Cache] Bypass: {Group}/{Discriminator}", request.CacheGroup, request.CacheDiscriminator);
+            logger.LogDebug("[Cache] Bypass: {Group}/{Discriminator}", request.CacheGroup, request.Discriminator);
             return await next(ct);
         }
 
@@ -55,11 +55,11 @@ public sealed class CachingBehavior<TRequest, TResponse>(ICacheService cache, IL
                 request.CacheGroup,
                 scope,
                 versionToken,
-                request.CacheDiscriminator);
+                request.Discriminator);
         }
         else
         {
-            cacheKey = CacheKeys.Entity(request.CacheGroup, request.CacheDiscriminator);
+            cacheKey = CacheKeys.Entity(request.CacheGroup, request.Discriminator);
         }
 
         // ── 3. Cache hit ────────────────────────────────────────────────────────
