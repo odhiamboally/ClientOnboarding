@@ -102,16 +102,28 @@ public class DBContext(
 
             if (_publisher is not null)
             {
+                // Publish domain events in parallel for better performance.
+                // Note: events are assumed to be order-independent; if ordering is required, use sequential publishing instead.
+                var publishTasks = domainEvents.Select(async domainEvent =>
+                {
+                    _logger?.LogDebug("Publishing domain event: {EventType}", domainEvent.GetType().Name);
+                    await _publisher.Publish(domainEvent, ct);
+                }).ToList();
+
+                var whenAllTask = Task.WhenAll(publishTasks);
+
                 try
                 {
-                    // Publish the events to MediatR
-                    foreach (var domainEvent in domainEvents)
-                    {
-                        await _publisher.Publish(domainEvent, ct);
-                    }
+                    await whenAllTask;
                 }
                 catch (Exception ex)
                 {
+                    if (whenAllTask.IsFaulted && whenAllTask.Exception is not null)
+                    {
+                        _logger?.LogError(whenAllTask.Exception, "Error(s) occurred while publishing domain events. Failed events: {FailedCount}", whenAllTask.Exception.InnerExceptions.Count);
+                        throw new AggregateException("Failed to publish one or more domain events", whenAllTask.Exception.InnerExceptions);
+                    }
+
                     _logger?.LogError(ex, "Error occurred while publishing domain events");
                     throw;
                 }
