@@ -1,0 +1,117 @@
+﻿@* Shows how long Pending Approval and Draft clients have been open.
+   Buckets based on OpenedOn — proxy until status-change timestamps
+   are available from the audit log. *@
+
+<div style="background:var(--mud-palette-surface);
+            border:1px solid var(--mud-palette-divider);
+            border-radius:10px;
+            padding:20px 22px;
+            height:100%;
+            display:flex;
+            flex-direction:column;">
+
+    <div style="display:flex; align-items:center;
+                justify-content:space-between; margin-bottom:16px; flex-shrink:0">
+        <p style="font-size:11px;font-weight:500;color:var(--mud-palette-text-secondary);
+                  text-transform:uppercase;letter-spacing:.07em;margin:0">
+            Aging — pending &amp; draft
+        </p>
+        @if (SlaBreaches > 0)
+        {
+            <span style="font-size:11px; padding:3px 10px; border-radius:20px;
+                         background:#FCEBEB; color:#A32D2D; font-weight:500">
+                ⚠ @SlaBreaches SLA @(SlaBreaches == 1 ? "breach" : "breaches")
+            </span>
+        }
+    </div>
+
+    @* Summary tiles *@
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;
+                margin-bottom:16px; flex-shrink:0">
+        <div style="background:var(--mud-palette-background);
+                    border:1px solid var(--mud-palette-divider);
+                    border-radius:8px; padding:12px 14px;">
+            <p style="font-size:11px; color:var(--mud-palette-text-secondary); margin:0 0 4px">
+                Pending approval
+            </p>
+            <p style="font-size:24px; font-weight:500; color:#378ADD;
+                      line-height:1; margin:0 0 4px">
+                @Aging.PendingApproval.Total
+            </p>
+            <p style="font-size:11px; color:var(--mud-palette-text-disabled); margin:0">
+                Avg @Aging.PendingApproval.AvgDays days open
+            </p>
+        </div>
+        <div style="background:var(--mud-palette-background);
+                    border:1px solid var(--mud-palette-divider);
+                    border-radius:8px; padding:12px 14px;">
+            <p style="font-size:11px; color:var(--mud-palette-text-secondary); margin:0 0 4px">
+                Draft
+            </p>
+            <p style="font-size:24px; font-weight:500; color:#EF9F27;
+                      line-height:1; margin:0 0 4px">
+                @Aging.Draft.Total
+            </p>
+            <p style="font-size:11px; color:var(--mud-palette-text-disabled); margin:0">
+                Avg @Aging.Draft.AvgDays days open
+            </p>
+        </div>
+    </div>
+
+    @* Bucket table *@
+    <div style="flex:1; overflow-y:auto; min-height:0;">
+
+        @* Header *@
+        <div style="display:grid; grid-template-columns:1fr 80px 80px;
+                    gap:8px; padding:0 0 6px;
+                    border-bottom:1px solid var(--mud-palette-divider);
+                    margin-bottom:8px">
+            <span style="font-size:10px; font-weight:500;
+                          color:var(--mud-palette-text-disabled);
+                          text-transform:uppercase; letter-spacing:.06em">
+                Time open
+            </span>
+            <span style="font-size:10px; font-weight:500;
+                          color:var(--mud-palette-text-disabled);
+                          text-transform:uppercase; letter-spacing:.06em;
+                          text-align:center">
+                Pending
+            </span>
+            <span style="font-size:10px; font-weight:500;
+                          color:var(--mud-palette-text-disabled);
+                          text-transform:uppercase; letter-spacing:.06em;
+                          text-align:center">
+                Draft
+            </span>
+        </div>
+
+        @* Rows — most urgent first *@
+        <AgingRow Label="> 14 days"
+                  PendingCount="@Aging.PendingApproval.Over14Days"
+                  DraftCount="@Aging.Draft.Over14Days"
+                  Urgency="high" />
+
+        <AgingRow Label="7–14 days"
+                  PendingCount="@Aging.PendingApproval.Days7To14"
+                  DraftCount="@Aging.Draft.Days7To14"
+                  Urgency="medium" />
+
+        <AgingRow Label="3–6 days"
+                  PendingCount="@Aging.PendingApproval.Days3To6"
+                  DraftCount="@Aging.Draft.Days3To6"
+                  Urgency="low" />
+
+        <AgingRow Label="< 3 days"
+                  PendingCount="@Aging.PendingApproval.Under3Days"
+                  DraftCount="@Aging.Draft.Under3Days"
+                  Urgency="normal" />
+
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public AgingData Aging { get; set; } = default!;
+
+    // SLA breach = anything open more than 14 days
+    private int SlaBreaches => Aging.PendingApproval.Over14Days + Aging.Draft.Over14Days;
+}

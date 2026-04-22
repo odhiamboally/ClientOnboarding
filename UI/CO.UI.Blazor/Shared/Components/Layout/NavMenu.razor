@@ -1,10 +1,125 @@
-﻿<MudNavMenu>
-    <MudNavLink Href="/" Match="NavLinkMatch.All"
-                Icon="@Icons.Material.Filled.Dashboard">
-        Dashboard
-    </MudNavLink>
-    <MudNavLink Href="/clients"
-                Icon="@Icons.Material.Filled.Business">
-        Clients
-    </MudNavLink>
-</MudNavMenu>
+﻿@using MudBlazor
+
+<div style="display:flex; flex-direction:column; height:100%;
+    background:var(--mud-palette-surface);">
+
+    @* ── Logo ────────────────────────────────────────────────────────────── *@
+    <div style="padding:0; border-bottom:1px solid var(--mud-palette-divider); flex-shrink:0">
+        <MudImage Src="/custom/images/llancore_12.png"
+                  Alt="LlanCore"
+                  Width="250"
+                  ObjectFit="ObjectFit.Contain"
+                  Style="display:block; margin:auto;" />
+    </div>
+
+    @* ── Nav links ────────────────────────────────────────────────────────── *@
+    <div style="flex:1; overflow-y:auto; overflow-x:hidden; padding:8px 0;">
+        <MudNavMenu>
+            <MudNavLink Href="/"
+                        Match="NavLinkMatch.All"
+                        Icon="@Icons.Material.Filled.Dashboard">
+                Dashboard
+            </MudNavLink>
+            <MudNavLink Href="/clients"
+                        Icon="@Icons.Material.Filled.People">
+                Clients
+            </MudNavLink>
+        </MudNavMenu>
+    </div>
+
+    @* ── User panel ───────────────────────────────────────────────────────── *@
+    <div style="flex-shrink:0; border-top:1px solid var(--mud-palette-divider);">
+
+        @* Inline items — visible when expanded *@
+        @if (_userMenuOpen)
+        {
+            <MudList T="string" Dense Padding="false"
+                     Style="border-bottom:1px solid var(--mud-palette-divider); padding:4px 0;">
+
+                @* Settings — expandable sub-section *@
+                <MudListItem T="string"
+                             Icon="@Icons.Material.Filled.Settings"
+                             IconColor="Color.Default"
+                             OnClick="ToggleSettings"
+                             Style="font-size:13px;">
+                    <div style="display:flex; align-items:center;
+                        justify-content:space-between; width:100%">
+                        <span>Settings</span>
+                        <MudIcon Icon="@(_settingsOpen? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.ExpandMore)"
+                                 Style="font-size:16px; color:var(--mud-palette-text-disabled)" />
+                    </div>
+                </MudListItem>
+
+                @if (_settingsOpen)
+                {
+                    <MudListItem T="string"
+                                 Icon="@Icons.Material.Filled.Person"
+                                 IconColor="Color.Primary"
+                                 Style="font-size:13px; padding-left:32px;">
+                        Profile
+                    </MudListItem>
+                    <MudListItem T="string"
+                                 Icon="@Icons.Material.Filled.Lock"
+                                 IconColor="Color.Secondary"
+                                 Style="font-size:13px; padding-left:32px;">
+                        MFA
+                    </MudListItem>
+                }
+
+                <MudDivider Class="my-1" />
+
+                @* Sign out — standalone, destructive color *@
+                <MudListItem T="string"
+                             Icon="@Icons.Material.Filled.Logout"
+                             IconColor="Color.Error"
+                             Href="/"
+                             ForceLoad
+                             Style="font-size:13px; color:var(--mud-palette-error);">
+                    Sign out
+                </MudListItem>
+
+            </MudList>
+        }
+
+        @* User row — click to toggle *@
+        <MudListItem T="string"
+                     OnClick="ToggleUserMenu"
+                     Style="padding:8px 16px;">
+            <div style="display:flex; align-items:center; gap:10px; width:100%">
+
+                <MudAvatar Color="Color.Primary"
+                           Style="width:36px; height:36px; font-size:12px; font-weight:600; flex-shrink:0">
+                    SI
+                </MudAvatar>
+
+                <div style="flex:1; min-width:0; overflow:hidden;">
+                    <MudText Typo="Typo.body2"
+                             Style="font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        Signed In User
+                    </MudText>
+                    <MudText Typo="Typo.caption" Color="Color.Secondary">
+                        Relationship Manager
+                    </MudText>
+                </div>
+
+                <MudIcon Icon="@(_userMenuOpen? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ExpandLess)"
+                         Style="color:var(--mud-palette-text-disabled); font-size:18px; flex-shrink:0" />
+            </div>
+        </MudListItem>
+
+    </div>
+</div>
+
+@code {
+    private bool _userMenuOpen = false;
+    private bool _settingsOpen = false;
+
+    private void ToggleUserMenu()
+    {
+        _userMenuOpen = !_userMenuOpen;
+        if (!_userMenuOpen)
+            _settingsOpen = false;  // collapse settings when user panel closes
+    }
+
+    private void ToggleSettings() => _settingsOpen = !_settingsOpen;
+}

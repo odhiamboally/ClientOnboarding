@@ -1,0 +1,39 @@
+﻿@page "/dashboard"
+@inherits DashboardBase
+
+@if (_loading)
+{
+    <MudProgressLinear Indeterminate Color="Color.Primary" Class="mb-4" />
+}
+
+@if (_summary is not null)
+{
+    <MudStack Spacing="3" Class="pb-8">
+
+        @* KPI strip *@
+        <KpiStrip Total="@_summary.TotalClients"
+                  Active="@_summary.ActiveClients"
+                  PendingApproval="@_summary.PendingApprovalClients"
+                  Draft="@_summary.DraftClients" />
+
+        @* Middle row: breakdown (left) + aging (right) *@
+        <div style="display:grid;
+            grid-template-columns:5fr 7fr;
+            gap:16px;
+            align-items:stretch;">
+            <ClientBreakdownCard Segments="@_summary.BySegment"
+                                 ClientTypes="@_summary.ByClientType" />
+            <AgingCard Aging="@_summary.Aging" />
+        </div>
+
+        @* Full-width RM workload table *@
+        <RmWorkloadCard Items="@_summary.RmWorkload" />
+
+    </MudStack>
+}
+else if (!_loading)
+{
+    <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+        No dashboard data available.
+    </MudAlert>
+}

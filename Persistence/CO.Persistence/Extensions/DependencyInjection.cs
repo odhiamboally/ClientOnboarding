@@ -36,13 +36,10 @@ public static class DependencyInjection
         try
         {
             var ConnString = configuration.GetConnectionString("BR");
+            services.AddDbContextPool<DBContext>(options => options.UseSqlServer(ConnString));
 
-            services.AddPooledDbContextFactory<DBContext>(options => options.UseSqlServer(ConnString));
-
-            // Register a scoped DBContext sourced from the pool so existing consumers (UnitOfWork,
-            // Repository, etc.) continue to share one instance per scope. The DI container disposes
-            // the scoped instance at the end of each request, returning it to the pool.
-            services.AddScoped<DBContext>(sp => sp.GetRequiredService<IDbContextFactory<DBContext>>().CreateDbContext());
+            //services.AddPooledDbContextFactory<DBContext>(options => options.UseSqlServer(ConnString));
+            //services.AddDbContext<DBContext>(options => options.UseSqlServer(ConnString));
 
             return services;
 

@@ -13,6 +13,7 @@ public interface ILookupService
     List<LookupResponse> GetSubSegmentTypes();
     List<LookupResponse> GetLinesOfBusiness();
     List<LookupResponse> GetIdentificationTypes();
+    List<LookupResponse> GetClientStatus();
     List<LookupResponse> GetLookup<T>() where T : struct, Enum;
     Task<List<StaffMemberResponse>> GetRelationshipManagers(string userId);
 
