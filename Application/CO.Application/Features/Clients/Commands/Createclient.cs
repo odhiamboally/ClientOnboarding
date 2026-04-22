@@ -19,11 +19,21 @@ using System.Text;
 
 namespace CO.Application.Features.Clients.Commands;
 
+/// <summary>
+/// Invalidation: bump the version token for "clients" globally.
+/// No entity key to delete (the entity does not exist in cache yet).
+/// Every user's versioned list entries are orphaned in O(1).
+/// </summary>
 public record CreateClientCommand(CreateClientRequest CreateClientRequest, string UserId) 
     : IRequest<AppResponse<ClientResponse>>, ICacheInvalidatorRequest
 {
-    public List<string> CacheVersionKeysToInvalidate => [CacheKeys.ClientListVersion(UserId)];
+    // No direct keys — new entity, nothing cached yet.
+    public IReadOnlyList<string> DirectInvalidationKeys => [];
+
+    // Bump the global "clients" version so all users see the new entry on next list load.
+    public IReadOnlyList<string> GroupVersionKeysToInvalidate => [CacheKeys.GroupVersion("clients")];
         
+
 }
     
 internal sealed class CreateClientCommandHandler(
@@ -110,10 +120,15 @@ internal sealed class CreateClientCommandHandler(
                 client.ToClientResponse());
                 
         }
+        catch (ArgumentException ex)
+        {
+            _logger.LogWarning(ex, "Domain validation failed creating client");
+            return AppResponse<ClientResponse>.Failure(ex.Message);  
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating client");
-            throw;
+            throw;  
         }
     }
 }

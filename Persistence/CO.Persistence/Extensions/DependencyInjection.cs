@@ -36,14 +36,10 @@ public static class DependencyInjection
         try
         {
             var ConnString = configuration.GetConnectionString("BR");
+            services.AddDbContextPool<DBContext>(options => options.UseSqlServer(ConnString));
+
             //services.AddPooledDbContextFactory<DBContext>(options => options.UseSqlServer(ConnString));
-    
-            services.AddDbContext<DBContext>(options =>
-            {
-                options.UseSqlServer(ConnString);
-                // Use NoTracking as default for read-heavy operations; apply AsTracking() explicitly for mutations
-                options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-            });
+            //services.AddDbContext<DBContext>(options => options.UseSqlServer(ConnString));
 
             return services;
 

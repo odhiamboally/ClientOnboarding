@@ -29,5 +29,8 @@ public enum SubSegmentType
     SoleProprietorship,
 
     [Description("Non Governmental Organisation")]
-    NGO
+    NGO,
+
+    [Description("Non Governmental Organisation")]
+    Individual
 }

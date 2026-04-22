@@ -26,4 +26,8 @@
     <ProjectReference Include="..\..\Shared\CO.Shared\CO.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Features\Dashboard\Models\" />
+  </ItemGroup>
+
 </Project>
