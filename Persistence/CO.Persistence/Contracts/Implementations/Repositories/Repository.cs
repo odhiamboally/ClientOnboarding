@@ -106,8 +106,28 @@ public class Repository<T>(DBContext context) : IRepository<T> where T : class
 
     public async Task<T?> FindByIdAsync(Guid Id, CancellationToken ct = default)
     {
-        return await _context.Set<T>().FindAsync([Id], ct);
+        return await _context.Set<T>().AsNoTracking().FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == Id, ct);
 
+    }
+
+    /// <summary>
+    /// Loads an entity with change tracking enabled. Use this before calling
+    /// <see cref="UpdateAsync"/> or <see cref="DeleteAsync"/> when you need
+    /// EF Core to detect property-level changes rather than marking all
+    /// columns modified.
+    /// </summary>
+    public async Task<T?> FindByIdTrackedAsync(Guid id, CancellationToken ct = default)
+    {
+        return await _context.Set<T>().AsTracking().FirstOrDefaultAsync(e => EF.Property<Guid>(e, "Id") == id, ct);
+    }
+
+    /// <summary>
+    /// Returns a tracked queryable for mutation operations (insert/update/delete).
+    /// Use <see cref="FindAll"/> or <see cref="FindByCondition"/> for read-only queries.
+    /// </summary>
+    public IQueryable<T> FindByConditionTracked(Expression<Func<T, bool>> expression)
+    {
+        return _context.Set<T>().AsTracking().Where(expression);
     }
 
     public async Task<List<T>> SearchAsync<TCursor>(ISpecification<T, TCursor> spec, CancellationToken ct = default)

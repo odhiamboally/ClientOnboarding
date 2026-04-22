@@ -33,9 +33,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Domain\CO.Domain\CO.Domain.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="MediatR" Version="14.1.0" />
   </ItemGroup>
 

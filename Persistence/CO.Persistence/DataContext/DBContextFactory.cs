@@ -24,6 +24,7 @@ public class DBContextFactory : IDesignTimeDbContextFactory<DBContext>
         var connectionString = configuration.GetConnectionString("BR");
 
         optionsBuilder.UseSqlServer(connectionString);
+        optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
 
         return new DBContext(optionsBuilder.Options);
     }
