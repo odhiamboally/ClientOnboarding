@@ -12,4 +12,9 @@
     <Project Path="Shared/CO.Shared/CO.Shared.csproj" Id="12eb0653-034a-4a1c-a2e7-b4cf9497c608" />
     <Project Path="UI/CO.UI.Blazor/CO.UI.Blazor.csproj" Id="456caa05-d7c2-48c1-b106-2aaa934e8bfa" />
   </Folder>
+  <Folder Name="/src/Modules/" />
+  <Folder Name="/src/Modules/Accounts/" />
+  <Folder Name="/src/Modules/Customers/" />
+  <Folder Name="/src/Modules/Loans/" />
+  <Folder Name="/src/Modules/Transactions/" />
 </Solution>

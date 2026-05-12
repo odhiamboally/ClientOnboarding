@@ -7,33 +7,60 @@ using System.Text;
 
 namespace CO.Application.Behaviours;
 
-public class CacheInvalidationBehavior<TRequest, TResponse>
-    (ICacheService cache, ILogger<CacheInvalidationBehavior<TRequest, TResponse>> logger)
-    : IPipelineBehavior<TRequest, TResponse>
-    where TRequest : IRequest<TResponse>, ICacheInvalidatorRequest
+/// <summary>
+/// MediatR pipeline behavior that invalidates cache entries after a mutation command succeeds.
+/// Runs for any command implementing <see cref="ICacheInvalidatorRequest"/>.
+///
+/// Invalidation runs AFTER the handler — only on success. If the handler throws,
+/// the cache is left untouched and the exception propagates normally.
+///
+/// Two invalidation modes:
+///
+///   1. Direct key deletion
+///      Removes entity-level entries whose exact key is known at command time.
+///      Example: the entity the command just updated.
+///
+///   2. Version token bump
+///      Replaces the version sentinel for a group+scope with a new timestamp.
+///      This orphans every versioned list/search entry in that group without
+///      any key scanning — O(1) regardless of how many filter combinations are cached.
+///      The orphaned entries are never explicitly deleted; they simply miss on the
+///      next read (wrong version in the key) and expire naturally.
+/// </summary>
+public sealed class CacheInvalidationBehavior<TRequest, TResponse>(
+    ICacheService cache, ILogger<CacheInvalidationBehavior<TRequest, TResponse>> logger)
+
+    : IPipelineBehavior<TRequest, TResponse> where TRequest 
+    : IRequest<TResponse>, ICacheInvalidatorRequest
+    
 {
-    public async Task<TResponse> Handle(
-        TRequest request,
-        RequestHandlerDelegate<TResponse> next,
-        CancellationToken ct)
+    // Version tokens bump to a 24 h TTL — same as CachingBehavior creates them.
+    private static readonly TimeSpan VersionTtl = TimeSpan.FromDays(1);
+
+    public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken ct)
     {
+        // Execute the command first — invalidate only on success.
         var response = await next(ct);
 
-        // Direct key deletions (entity cache)
-        foreach (var key in request.CacheKeysToInvalidate)
+        // ── 1. Direct key deletions ────────────────────────────────────────────
+        foreach (var key in request.DirectInvalidationKeys)
         {
-            logger.LogInformation("Invalidating cache key: {Key}", key);
             await cache.RemoveAsync(key, ct);
+            logger.LogInformation("[Cache] DELETED {Key}", key);
         }
 
-        // Version bumps (list cache — orphans all filter variants)
-        foreach (var versionKey in request.CacheVersionKeysToInvalidate)
+        // ── 2. Version token bumps ─────────────────────────────────────────────
+        foreach (var sentinelKey in request.GroupVersionKeysToInvalidate)
         {
-            var newVersion = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
-            logger.LogInformation("Bumping cache version: {VersionKey} → {Version}", versionKey, newVersion);
-            await cache.SetAsync(versionKey, newVersion, TimeSpan.FromDays(1), ct);
+            var newVersion = GenerateVersion();
+            await cache.SetAsync(sentinelKey, newVersion, VersionTtl, ct);
+            logger.LogInformation("[Cache] BUMPED  {SentinelKey} → {Version}", sentinelKey, newVersion);
         }
 
         return response;
     }
+
+    private static string GenerateVersion() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+        
 }
+

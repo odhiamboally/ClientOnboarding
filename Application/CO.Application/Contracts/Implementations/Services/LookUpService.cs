@@ -22,6 +22,7 @@ internal sealed class LookupService(ISender sender) : ILookupService
     public List<LookupResponse> GetSubSegmentTypes() => [.. EnumExtensions.ToLookupResponses<SubSegmentType>()];
     public List<LookupResponse> GetLinesOfBusiness() => [.. EnumExtensions.ToLookupResponses<LineOfBusiness>()];
     public List<LookupResponse> GetIdentificationTypes() => [.. EnumExtensions.ToLookupResponses<IdentificationType>()];
+    public List<LookupResponse> GetClientStatus() => [.. EnumExtensions.ToLookupResponses<ClientStatus>()];
 
     public List<LookupResponse> GetLookup<T>() where T : struct, Enum
     {

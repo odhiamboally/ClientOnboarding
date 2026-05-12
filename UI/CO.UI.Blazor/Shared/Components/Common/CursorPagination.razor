@@ -1,0 +1,86 @@
+﻿@* Reusable cursor-based pagination control.
+   Supports: First | Prev | Page indicator | Next
+   Last page is intentionally omitted — cursor pagination cannot jump to an
+   arbitrary page without fetching all preceding cursors first. *@
+
+<div class="d-flex align-center justify-space-between flex-wrap gap-2 pa-2">
+
+    @* ── Left: record summary ──────────────────────────────────────────────── *@
+    <MudText Typo="Typo.body2" Color="Color.Secondary">
+        @if (TotalRecords > 0)
+        {
+            <span>
+                Showing @StartRecord–@EndRecord of @TotalRecords records
+            </span>
+        }
+        else
+        {
+            <span>No records found</span>
+        }
+    </MudText>
+
+    @* ── Right: navigation buttons ────────────────────────────────────────── *@
+    <div class="d-flex align-center gap-1">
+
+        @* First *@
+        <MudTooltip Text="First page">
+            <MudIconButton Icon="@Icons.Material.Filled.FirstPage"
+                           Size="Size.Small"
+                           Disabled="@IsFirstPage"
+                           OnClick="OnFirstPageClick"
+                           Color="Color.Default" />
+        </MudTooltip>
+
+        @* Previous *@
+        <MudTooltip Text="Previous page">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronLeft"
+                           Size="Size.Small"
+                           Disabled="@IsFirstPage"
+                           OnClick="OnPreviousPageClick"
+                           Color="Color.Default" />
+        </MudTooltip>
+
+        @* Page indicator *@
+        <MudChip T="string" Size="Size.Small" Color="Color.Primary" Variant="Variant.Filled">
+            Page @CurrentPage
+        </MudChip>
+
+        @* Next *@
+        <MudTooltip Text="Next page">
+            <MudIconButton Icon="@Icons.Material.Filled.ChevronRight"
+                           Size="Size.Small"
+                           Disabled="@IsLastPage"
+                           OnClick="OnNextPageClick"
+                           Color="Color.Default" />
+        </MudTooltip>
+
+        @* Last — disabled by design for cursor pagination *@
+        <MudTooltip Text="Last page not available with cursor pagination">
+            <MudIconButton Icon="@Icons.Material.Filled.LastPage"
+                           Size="Size.Small"
+                           Disabled="true"
+                           Color="Color.Default" />
+        </MudTooltip>
+
+    </div>
+
+</div>
+
+@code {
+    [Parameter, EditorRequired] public int TotalRecords { get; set; }
+    [Parameter, EditorRequired] public int CurrentPage { get; set; }
+    [Parameter, EditorRequired] public int PageSize { get; set; }
+    [Parameter, EditorRequired] public bool IsFirstPage { get; set; }
+    [Parameter, EditorRequired] public bool IsLastPage { get; set; }
+
+    [Parameter, EditorRequired] public EventCallback OnFirst { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnPrevious { get; set; }
+    [Parameter, EditorRequired] public EventCallback OnNext { get; set; }
+
+    private int StartRecord => TotalRecords == 0 ? 0 : ((CurrentPage - 1) * PageSize) + 1;
+    private int EndRecord => Math.Min(CurrentPage * PageSize, TotalRecords);
+
+    private Task OnFirstPageClick() => OnFirst.InvokeAsync();
+    private Task OnPreviousPageClick() => OnPrevious.InvokeAsync();
+    private Task OnNextPageClick() => OnNext.InvokeAsync();
+}

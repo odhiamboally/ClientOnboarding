@@ -23,7 +23,13 @@ public enum SegmentType
     Retail,
 
     [Description("Small Medium Enterprise")]
-    SME
+    SME,
+
+    [Description("Small Medium Enterprise")]
+    Individual
+
+
+
 
 
 }

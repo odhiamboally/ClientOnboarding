@@ -1,0 +1,59 @@
+﻿
+<div style="border-top: 1px solid var(--mud-palette-divider); padding: 12px 16px;">
+    <MudMenu FullWidth
+             AnchorOrigin="Origin.TopCenter"
+             TransformOrigin="Origin.BottomCenter"
+             Dense
+             Fixed="true"
+             PopoverClass="sidebar-user-menu-popover">
+        <ActivatorContent>
+            <div style="display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 8px; border-radius: 8px; transition: background .15s; background: rgba(0,0,0,0.03);"
+                 onmouseover="this.style.background='var(--mud-palette-action-default-hover)'"
+                 onmouseout="this.style.background='rgba(0,0,0,0.03)'">
+
+                @* Avatar using Indigo (Primary) *@
+                <div style="width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+                    background: var(--mud-palette-primary);
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 13px; font-weight: 600; color: var(--mud-palette-primary-content);">
+                    SI
+                </div>
+
+                @* Text using Theme Colors *@
+                <div style="flex: 1; min-width: 0; overflow: hidden;">
+                    <p style="font-size: 13px; font-weight: 600; color: var(--mud-palette-text-primary); margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                        Signed In User
+                    </p>
+                    <p style="font-size: 11px; color: var(--mud-palette-text-secondary); margin: 0;">
+                        Relationship Manager
+                    </p>
+                </div>
+
+                <MudIcon Icon="@Icons.Material.Filled.ExpandLess"
+                         Style="color: var(--mud-palette-text-disabled); font-size: 18px; flex-shrink: 0" />
+            </div>
+        </ActivatorContent>
+
+        <ChildContent>
+            <MudMenuItem Icon="@Icons.Material.Filled.Person" IconColor="Color.Inherit">
+                Profile
+            </MudMenuItem>
+
+            <MudDivider />
+
+            <MudMenuItem Icon="@Icons.Material.TwoTone.Settings" IconColor="Color.Inherit">
+                Settings (MFA/Password)
+            </MudMenuItem>
+
+            <MudDivider />
+
+            <MudMenuItem Icon="@Icons.Material.Filled.Logout"
+                         IconColor="Color.Error"
+                         Href="/"
+                         ForceLoad>
+                Sign out
+            </MudMenuItem>
+        </ChildContent>
+        
+    </MudMenu>
+</div>

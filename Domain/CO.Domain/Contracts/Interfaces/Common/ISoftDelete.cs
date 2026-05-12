@@ -6,4 +6,5 @@ namespace CO.Domain.Contracts.Interfaces.Common;
 
 public interface ISoftDelete
 {
+    bool IsDeleted { get; set; }
 }
